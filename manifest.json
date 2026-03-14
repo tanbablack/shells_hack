@@ -1,0 +1,23 @@
+{
+  "name": "SHELLS HACK",
+  "short_name": "SHELLS HACK",
+  "description": "サイバー攻防戦カードバトル - ハッカー vs セキュリティアーキテクト",
+  "start_url": "/app.html",
+  "display": "standalone",
+  "background_color": "#0a0a0f",
+  "theme_color": "#00d4ff",
+  "icons": [
+    {
+      "src": "img/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "img/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

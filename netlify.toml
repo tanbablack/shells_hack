@@ -1,0 +1,9 @@
+# SHELLS HACK Netlify Configuration
+
+[build]
+  publish = "."
+
+# 研修ファシリテーター向け資料のパスにBasic認証を適用
+[[edge_functions]]
+  path = "/admin/*"
+  function = "auth"

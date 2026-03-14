@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<link rel="icon" type="image/x-icon" href="img/favicon.ico">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SHELLS HACK - ルールブック</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-dark: #0a0a0f;
+  --bg-panel: #12121a;
+  --blue-primary: #00d4ff;
+  --red-primary: #ff3366;
+  --gold: #ffd700;
+  --purple: #9c27b0;
+  --green: #00e676;
+  --orange: #ff9800;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Noto Sans JP', sans-serif;
+  background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #0f0f1a 100%);
+  color: #e0e0e0;
+  min-height: 100vh;
+  line-height: 1.7;
+}
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 30px 20px;
+}
+/* ヘッダー */
+.header {
+  text-align: center;
+  margin-bottom: 40px;
+  padding: 30px;
+  background: rgba(0,0,0,0.4);
+  border: 2px solid var(--gold);
+  border-radius: 12px;
+}
+.header h1 {
+  font-family: 'Orbitron', monospace;
+  font-size: 48px;
+  font-weight: 900;
+  background: linear-gradient(135deg, var(--blue-primary), var(--red-primary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 10px;
+}
+.header .subtitle {
+  font-size: 16px;
+  color: #aaa;
+}
+/* ナビゲーション */
+.nav-links {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+}
+.nav-link {
+  padding: 10px 20px;
+  background: transparent;
+  border: 2px solid var(--blue-primary);
+  border-radius: 6px;
+  color: var(--blue-primary);
+  text-decoration: none;
+  font-family: 'Orbitron', monospace;
+  font-size: 14px;
+  transition: all 0.3s;
+}
+.nav-link:hover {
+  background: var(--blue-primary);
+  color: #000;
+}
+/* 目次 */
+.toc {
+  background: rgba(0,0,0,0.4);
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 20px 30px;
+  margin-bottom: 40px;
+}
+.toc h2 {
+  font-family: 'Orbitron', monospace;
+  font-size: 18px;
+  color: var(--gold);
+  margin-bottom: 15px;
+}
+.toc ol {
+  padding-left: 20px;
+}
+.toc li {
+  margin-bottom: 8px;
+}
+.toc a {
+  color: var(--blue-primary);
+  text-decoration: none;
+}
+.toc a:hover {
+  text-decoration: underline;
+}
+/* セクション */
+section {
+  background: rgba(0,0,0,0.3);
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 25px;
+  margin-bottom: 30px;
+}
+h2 {
+  font-family: 'Orbitron', monospace;
+  font-size: 24px;
+  color: var(--gold);
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--gold);
+}
+h3 {
+  font-family: 'Orbitron', monospace;
+  font-size: 18px;
+  color: var(--blue-primary);
+  margin: 25px 0 15px 0;
+}
+h4 {
+  font-size: 16px;
+  color: var(--orange);
+  margin: 20px 0 10px 0;
+}
+p {
+  margin-bottom: 15px;
+}
+/* テーブル */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 15px 0;
+  font-size: 14px;
+}
+th, td {
+  padding: 10px 12px;
+  border: 1px solid #444;
+  text-align: left;
+}
+th {
+  background: rgba(255, 215, 0, 0.15);
+  color: var(--gold);
+  font-weight: 600;
+}
+tr:nth-child(even) {
+  background: rgba(255,255,255,0.03);
+}
+tr:hover {
+  background: rgba(0, 212, 255, 0.1);
+}
+/* コードブロック */
+.code-block {
+  background: #1a1a2e;
+  border: 1px solid #333;
+  border-radius: 6px;
+  padding: 15px;
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  color: var(--green);
+  margin: 15px 0;
+  overflow-x: auto;
+}
+/* リスト */
+ul, ol {
+  padding-left: 25px;
+  margin: 10px 0;
+}
+li {
+  margin-bottom: 8px;
+}
+/* 強調 */
+strong {
+  color: var(--orange);
+}
+/* 注釈 */
+.note {
+  background: rgba(255, 152, 0, 0.1);
+  border-left: 4px solid var(--orange);
+  padding: 12px 15px;
+  margin: 15px 0;
+  font-size: 14px;
+}
+/* カード一覧セクション */
+.card-section {
+  margin-top: 20px;
+}
+.card-section h4 {
+  display: inline-block;
+  padding: 5px 15px;
+  border-radius: 4px;
+  font-size: 14px;
+}
+.card-section.recon h4 { background: rgba(255, 193, 7, 0.2); color: #ffc107; }
+.card-section.weapon h4 { background: rgba(156, 39, 176, 0.2); color: #ce93d8; }
+.card-section.intrusion h4 { background: rgba(244, 67, 54, 0.2); color: #ef5350; }
+.card-section.lateral h4 { background: rgba(255, 87, 34, 0.2); color: #ff7043; }
+.card-section.objective h4 { background: rgba(183, 28, 28, 0.2); color: #e53935; }
+.card-section.defense h4 { background: rgba(0, 212, 255, 0.2); color: var(--blue-primary); }
+.card-section.event h4 { background: rgba(0, 230, 118, 0.2); color: var(--green); }
+/* 勝敗条件 */
+.team-blue { color: var(--blue-primary); }
+.team-red { color: var(--red-primary); }
+/* フッター */
+.footer {
+  text-align: center;
+  padding: 30px;
+  color: #666;
+  font-size: 14px;
+}
+/* レスポンシブ */
+@media (max-width: 768px) {
+  .header h1 { font-size: 32px; }
+  table { font-size: 12px; }
+  th, td { padding: 8px; }
+  section { padding: 15px; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<header class="header">
+  <h1>SHELLS HACK</h1>
+  <p class="subtitle">セキュリティアーキテクト と ハッカー のサイバー攻防戦シミュレーション・カードバトル</p>
+</header>
+
+<nav class="nav-links">
+  <a href="index.html" class="nav-link">🎮 ゲーム</a>
+  <a href="cards_view.html" class="nav-link">🃏 カード一覧</a>
+  <a href="components_sheet.html" class="nav-link">🖥️ コンポーネント</a>
+</nav>
+
+<nav class="toc">
+  <h2>📋 目次</h2>
+  <ol>
+    <li><a href="#overview">ゲーム概要</a></li>
+    <li><a href="#players">プレイ人数・必要なもの</a></li>
+    <li><a href="#victory">ゲーム終了条件・勝敗</a></li>
+    <li><a href="#flow">ゲームの進め方</a></li>
+    <li><a href="#online">オンライン対戦</a></li>
+    <li><a href="#rules">攻撃・対策ルール</a></li>
+    <li><a href="#stock">株価下落計算</a></li>
+    <li><a href="#cards">カード一覧</a></li>
+  </ol>
+</nav>
+
+<section id="overview">
+  <h2>ゲーム概要</h2>
+  <p>サイバーセキュリティにおける攻撃者（Red Team）と企業側（Blue Team）の攻防をシミュレーションしたターン制バトルカードゲームです。</p>
+  <p>Blue Teamはセキュリティアーキテクチャを実装し待ち受け、Red Teamは自身の目的達成のためそれを突破を試みます。</p>
+</section>
+
+<section id="players">
+  <h2>プレイ人数・必要なもの</h2>
+  <p><strong>プレイ人数:</strong> 2人以上</p>
+  
+  <h3 class="team-blue">🛡️ Blue Team（防御側）</h3>
+  <table>
+    <tr><th>アイテム</th><th>説明</th></tr>
+    <tr><td>企業カード</td><td>守るべき情報資産と資金力を決定</td></tr>
+    <tr><td>コンポーネントカード</td><td>サービス構成要素</td></tr>
+    <tr><td>対策カード</td><td>セキュリティ対策</td></tr>
+    <tr><td>コストトークン</td><td>対策コスト支払い用</td></tr>
+    <tr><td>株価トークン</td><td>企業価値の指標</td></tr>
+  </table>
+  
+  <h3 class="team-red">⚔️ Red Team（攻撃側）</h3>
+  <table>
+    <tr><th>アイテム</th><th>説明</th></tr>
+    <tr><td>攻撃アクターカード</td><td>攻撃者の目的と能力</td></tr>
+    <tr><td>攻撃カード</td><td>攻撃手段</td></tr>
+    <tr><td>コストトークン</td><td>攻撃コスト支払い用</td></tr>
+  </table>
+</section>
+
+<section id="victory">
+  <h2>ゲーム終了条件・勝敗</h2>
+  <table>
+    <tr><th>チーム</th><th>敗北条件</th><th>勝利条件</th></tr>
+    <tr><td class="team-blue"><strong>Blue Team</strong></td><td>株価50%以下</td><td>10ターン経過（設定で変更可能）</td></tr>
+    <tr><td class="team-red"><strong>Red Team</strong></td><td>10ターン経過（設定で変更可能）</td><td>株価50%以下 OR 目的を達成</td></tr>
+  </table>
+</section>
+
+<section id="flow">
+  <h2>ゲームの進め方</h2>
+  
+  <h3>プレイ準備</h3>
+  <table>
+    <tr><th>Step</th><th>内容</th></tr>
+    <tr><td>1</td><td>Red TeamとBlue Teamの攻守を決定</td></tr>
+    <tr><td>2</td><td>Blue Team: 企業カードを引き、守るべき情報資産を確認</td></tr>
+    <tr><td>3</td><td>Blue Team: <strong>アーキテクト画面</strong>でコンポーネント構成と隣接関係を設定</td></tr>
+    <tr><td>4</td><td>Blue Team: 企業の堅牢性★分だけ対策カードを自動配布、さらに資金力★分だけ追加ドロー可能</td></tr>
+    <tr><td>5</td><td>Red Team: 攻撃アクターカードを引き、目的を確認</td></tr>
+    <tr><td>6</td><td>Red Team: 初期手札として5種類の攻撃カード（偵察/武器化/侵入-直接/侵入-横展開/目的実行）から各1枚ずつランダムに配られる。その後、技術力★分だけ追加で攻撃カードを引く</td></tr>
+    <tr><td>7</td><td>株価トークン10個（100%）をセット</td></tr>
+  </table>
+  
+  <h3>アーキテクト画面</h3>
+  <p>ゲーム開始前にBlue Teamがシステム構成をカスタマイズする画面です。</p>
+  <table>
+    <tr><th>機能</th><th>説明</th></tr>
+    <tr><td>コンポーネント選択</td><td>構成図のコンポーネントをクリックして有効/無効を切替</td></tr>
+    <tr><td>隣接関係マトリクス</td><td>チェックボックスで横展開経路を自由に定義</td></tr>
+    <tr><td>リアルタイム可視化</td><td>矢印で接続関係を視覚的に確認</td></tr>
+  </table>
+  <div class="note">
+    <strong>カスタマイズ例:</strong> 実際の企業環境に合わせて「VPN Gateway→クラウド管理コンソール」など独自の経路を追加可能
+  </div>
+  
+  <h3>ターン構成</h3>
+  <p>各ターンは3フェーズで構成:</p>
+  
+  <h4>＜初期フェーズ＞</h4>
+  <p>資金力★分だけコストトークンを獲得（最大5）</p>
+  
+  <h4>＜イベントフェーズ＞</h4>
+  <p>イベントカードを1枚引き、効果を適用</p>
+  
+  <h4>＜行動フェーズ＞</h4>
+  <table>
+    <tr><th>チーム</th><th>行動</th></tr>
+    <tr><td class="team-blue">Blue Team</td><td>対策カードを1枚引き、手札から対策を適用可能</td></tr>
+    <tr><td class="team-red">Red Team</td><td>攻撃カードを1枚引き、手札から攻撃を実行可能</td></tr>
+  </table>
+</section>
+
+<section id="online">
+  <h2>オンライン対戦</h2>
+  <p>離れた場所にいるプレイヤーとリアルタイムで対戦できます。</p>
+  
+  <h3>ゲームモード選択</h3>
+  <p>タイトル画面で「ソロプレイ」または「オンライン対戦」を選択します。</p>
+  <table>
+    <tr><th>モード</th><th>説明</th></tr>
+    <tr><td>ソロプレイ</td><td>1人で両チームを操作</td></tr>
+    <tr><td>ソロプレイ（CPU対戦）</td><td>Blue/Redの片方または両方をCPUが操作</td></tr>
+    <tr><td>オンライン対戦</td><td>2人で対戦（各自1チームを担当）</td></tr>
+  </table>
+  
+  <h3>CPU対戦モード</h3>
+  <p>ソロプレイ時に、Blue Team/Red TeamをそれぞれCPUに任せることができます。</p>
+  
+  <h4>設定方法</h4>
+  <ol>
+    <li>タイトル画面で「ソロプレイ」を選択</li>
+    <li>セットアップ画面下部の「🤖 CPU対戦」でチェックを入れる</li>
+    <li>「Blue = CPU」「Red = CPU」を個別に選択可能</li>
+  </ol>
+  
+  <h4>CPU戦略</h4>
+  <table>
+    <tr><th>チーム</th><th>戦略の特徴</th></tr>
+    <tr><td>Blue CPU</td><td>侵入済み・偵察済みコンポーネントを優先防御、情報資産の重要度を考慮</td></tr>
+    <tr><td>Red CPU</td><td>目的実行可能なら即実行、情報資産を狙って侵入、武器化でバフ蓄積</td></tr>
+  </table>
+  
+  <h4>CPU学習機能（Red Team）</h4>
+  <p>Red CPUは攻撃の成功・失敗を記憶し、同じ失敗を繰り返しません:</p>
+  <ul>
+    <li><strong>偵察失敗の学習:</strong> 偵察に失敗したコンポーネントには再度偵察を試みない</li>
+    <li><strong>侵入失敗の学習:</strong> 同じカードで同じターゲットへの侵入に失敗した場合、その組み合わせを避ける</li>
+    <li><strong>偵察スキップ:</strong> 偵察可能なターゲットが全て失敗済みの場合、偵察なしでも侵入を試みる</li>
+  </ul>
+  
+  <h4>CPU戦略切替（Red Team）</h4>
+  <p>Red CPUは状況に応じて戦略を切り替えます:</p>
+  <table>
+    <tr><th>モード</th><th>条件</th><th>行動方針</th></tr>
+    <tr><td><strong>目標達成優先</strong></td><td>初期状態</td><td>アクター固有の目標達成を最優先。目標に必要な資産を持つコンポーネントを狙う</td></tr>
+    <tr><td><strong>株価下落優先</strong></td><td>全体ターンの50%経過しても目標進捗なし</td><td>とにかく侵入・目的実行を繰り返し、株価を下げることを重視</td></tr>
+  </table>
+  <p>例: 10ターン設定の場合、5ターン経過しても目標コンポーネントに侵入できていなければ株価下落優先モードに切り替わります。</p>
+  
+  <h4>CPU戦術（Red Team）</h4>
+  <p>Red CPUは以下の戦術的判断を行います:</p>
+  <ul>
+    <li><strong>目的実行優先:</strong> 侵入済みコンポーネントがあれば、新規偵察/侵入より目的実行を優先</li>
+    <li><strong>認証情報狙い:</strong> 社内認証情報を持つコンポーネントを優先的に攻撃し、横展開条件解除を狙う</li>
+    <li><strong>横展開活用:</strong> 認証情報漏洩後は、横展開カードで内部コンポーネントへ直接侵入</li>
+  </ul>
+  
+  <h4>CPU戦術（Blue Team）</h4>
+  <p>Blue CPUは以下の戦術的判断を行います:</p>
+  <ul>
+    <li><strong>状況適応:</strong> 偵察/侵入済みがなければ外部公開コンポーネントを優先防御、偵察済みがあれば侵入対策、侵入済みがあれば実行対策を優先</li>
+    <li><strong>Lv優先順位:</strong> 実行耐性Lv ＞ 侵入耐性Lv ＞ 偵察耐性Lv の順で強化</li>
+    <li><strong>認証情報保護:</strong> 認証情報資産を持つコンポーネントを優先的に保護（横展開解除を防ぐ）</li>
+  </ul>
+  
+  <h4>救済措置</h4>
+  <p>CPU対戦時でも、プレイヤーは以下の操作が可能です:</p>
+  <ul>
+    <li>CPUターン中も山札クリック・ターン終了ボタンを操作可能</li>
+    <li>CPUが停止した場合、手動でゲームを進行できる</li>
+    <li>両チームの手札・コストが常に表示される</li>
+  </ul>
+  
+  <h3>オンラインロビー</h3>
+  <p>オンライン対戦を選択すると、ロビー画面が表示されます。</p>
+  <table>
+    <tr><th>選択肢</th><th>説明</th></tr>
+    <tr><td>新規ルーム作成</td><td>ホストとしてルームを作成し、対戦相手を待つ</td></tr>
+    <tr><td>ルーム参加</td><td>4桁のRoom IDを入力して既存ルームに参加</td></tr>
+  </table>
+  
+  <h3>対戦フロー</h3>
+  <h4>ホスト（ルーム作成側）</h4>
+  <ol>
+    <li>「新規ルーム作成」を選択</li>
+    <li>4桁のRoom IDが自動生成され、待機画面に表示</li>
+    <li>Room IDを対戦相手に共有（口頭、チャット等）</li>
+    <li>相手が参加すると「対戦リクエスト」が表示</li>
+    <li>「承諾」を選択し、自分のチーム（Blue/Red）を選択</li>
+    <li>チーム別セットアップ画面へ移動</li>
+  </ol>
+  
+  <h4>ゲスト（ルーム参加側）</h4>
+  <ol>
+    <li>「ルーム参加」を選択</li>
+    <li>ホストから共有されたRoom IDを入力</li>
+    <li>「参加リクエスト送信中」画面で待機</li>
+    <li>ホストが承諾すると、割り当てられたチームが決定</li>
+    <li>チーム別セットアップ画面へ移動</li>
+  </ol>
+  <p style="color:var(--text-dim);font-size:14px;">※ホストが拒否した場合は「対戦拒否」と表示され、ロビーに戻れます</p>
+  
+  <h3>チーム別セットアップ</h3>
+  <p>オンライン対戦では、各プレイヤーが自分のチームのみをセットアップします。</p>
+  <table>
+    <tr><th>チーム</th><th>セットアップ内容</th></tr>
+    <tr><td>Blue Team</td><td>企業カード選択 → コンポーネント選択 → 準備フェーズ（対策カードドロー）</td></tr>
+    <tr><td>Red Team</td><td>攻撃アクター選択 → 準備フェーズ（攻撃カードドロー）</td></tr>
+  </table>
+  <p>両者が準備完了すると、自動的にゲームが開始されます。</p>
+  
+  <h3>ゲーム中の動作</h3>
+  <h4>ターン制御</h4>
+  <ul>
+    <li><strong>自分のターン:</strong> 通常通り操作可能</li>
+    <li><strong>相手のターン:</strong> 操作不可（オーバーレイ表示）</li>
+    <li>ターン終了ボタンを押すと、相手に操作権が移行</li>
+  </ul>
+  
+  <h4>情報の表示</h4>
+  <table>
+    <tr><th>項目</th><th>自チーム</th><th>相手チーム</th></tr>
+    <tr><td>手札</td><td>表示</td><td>非表示（マスク）</td></tr>
+    <tr><td>コスト</td><td>表示</td><td>非表示（マスク）</td></tr>
+    <tr><td>コンポーネント</td><td>表示</td><td>表示（Red側は偵察/侵入成功後にLv開示）</td></tr>
+  </table>
+  
+  <h3>Room状態表示</h3>
+  <p>ゲーム画面ヘッダーにRoom状態が表示されます。</p>
+  <table>
+    <tr><th>状態</th><th>意味</th></tr>
+    <tr><td>SOLO</td><td>ソロプレイ中</td></tr>
+    <tr><td>WAITING</td><td>対戦相手待機中</td></tr>
+    <tr><td>MATCHED</td><td>対戦成立・ゲーム中</td></tr>
+  </table>
+</section>
+
+<section id="rules">
+  <h2>攻撃・対策ルール</h2>
+  
+  <h3>対策レベル（3パラメータ）</h3>
+  <table>
+    <tr><th>パラメータ</th><th>説明</th></tr>
+    <tr><td><strong>偵察耐性</strong></td><td>情報収集への抵抗力</td></tr>
+    <tr><td><strong>侵入耐性</strong></td><td>不正アクセスへの抵抗力</td></tr>
+    <tr><td><strong>実行耐性</strong></td><td>最終目的達成への抵抗力</td></tr>
+  </table>
+  
+  <h3>攻撃カテゴリ</h3>
+  <table>
+    <tr><th>カテゴリ</th><th>説明</th><th>成功時効果</th></tr>
+    <tr><td><strong>偵察</strong></td><td>情報収集</td><td>対象のLv開示</td></tr>
+    <tr><td><strong>武器化</strong></td><td>攻撃準備</td><td>攻撃バフ付与（次ターンまで）</td></tr>
+    <tr><td><strong>侵入</strong></td><td>不正アクセス</td><td>侵入済みフラグ + 対策Lv開示 + 情報資産開示</td></tr>
+    <tr><td><strong>目的実行</strong></td><td>最終目的達成</td><td>株価下落等</td></tr>
+  </table>
+  
+  <h3>情報開示ルール</h3>
+  <p>Red Teamは段階的に情報を取得する:</p>
+  <table>
+    <tr><th>状態</th><th>開示される情報</th><th>表示</th></tr>
+    <tr><td>未偵察</td><td>なし</td><td>通常枠</td></tr>
+    <tr><td><strong>偵察済み</strong></td><td>対策Lv（偵・侵・実）</td><td style="color:#ff9800;">オレンジ枠</td></tr>
+    <tr><td><strong>侵入済み</strong></td><td>対策Lv + 情報資産</td><td style="color:#ff1744;">赤枠（点滅）</td></tr>
+  </table>
+  <p>※ Blue Teamは常時全情報を確認可能</p>
+  
+  <h3>攻撃成立条件</h3>
+  <p>攻撃が成功するには以下の全条件を満たす必要がある:</p>
+  
+  <h4>1. 露出条件</h4>
+  <table>
+    <tr><th>分類</th><th>コンポーネント</th><th>直接攻撃</th></tr>
+    <tr><td>Frontend</td><td>Web AP, Storage</td><td>○</td></tr>
+    <tr><td>端末</td><td>業務端末</td><td>○</td></tr>
+    <tr><td>Gateway</td><td>VPN Gateway, IdP</td><td>○</td></tr>
+    <tr><td>External</td><td>外部SaaS, DNS, 3rd Party JS, Client</td><td>○</td></tr>
+    <tr><td>運用</td><td>運用端末or踏み台サーバ, 社内SaaS, クラウド管理コンソール</td><td>×</td></tr>
+    <tr><td>Backend</td><td>DB, Internal API, Backup</td><td>×</td></tr>
+  </table>
+  <p><strong>×のコンポーネント:</strong> 隣接コンポーネントが侵入済みであることが必要</p>
+  <div class="note">
+    <strong>例外: 隣接無効ステータス</strong><br>
+    社内認証情報を漏洩させると「隣接無効」ステータスが付与され、×のコンポーネントにも直接攻撃可能になる。
+  </div>
+  
+  <h4>2. 対象条件</h4>
+  <p>攻撃カードのtargetにマッチすること</p>
+  
+  <h4>3. レベル条件</h4>
+  <div class="code-block">攻撃Lv ≧ 対策Lv</div>
+  <p>※ 攻撃Lv.0の項目は比較対象外</p>
+  
+  <h4>4. ステータス条件</h4>
+  <p>カードに応じた事前条件（偵察済み、侵入済み等）</p>
+  
+  <h3>武器化バフルール</h3>
+  <ul>
+    <li>武器化カード使用成功時、バフが適用</li>
+    <li><strong>バフは当ターン内の攻撃カードにのみ加算（ターン終了時にリセット）</strong></li>
+    <li><strong>ただし、攻撃カードの該当パラメータが元々Lv.0の場合、バフは加算されない</strong></li>
+    <li><strong>武器化カードは使用後に手札から消費される（他の攻撃カードは消費されない）</strong></li>
+  </ul>
+  <div class="code-block">実効攻撃Lv = (カード基本Lv > 0) ? カード基本Lv + バフLv : 0</div>
+  
+  <h3>手札重複ルール</h3>
+  <h4>攻撃カード（Red Team）</h4>
+  <table>
+    <tr><th>カテゴリ</th><th>手札に複数枚</th><th>理由</th></tr>
+    <tr><td><strong>武器化</strong></td><td>○ 可能</td><td>使用後に消費されるため</td></tr>
+    <tr><td><strong>偵察/侵入/目的実行</strong></td><td>× 不可</td><td>使用しても消費されないため</td></tr>
+  </table>
+  <ul>
+    <li>ドロー時に同名カードが手札に既に存在する場合、そのカードはゲームから除外される（デッキ枚数が減少）</li>
+    <li>武器化カードは例外として、同名カードを複数枚手札に持つことが可能</li>
+  </ul>
+  
+  <h4>対策カード（Blue Team）</h4>
+  <table>
+    <tr><th>カテゴリ</th><th>手札に複数枚</th><th>理由</th></tr>
+    <tr><td><strong>対策カード全般</strong></td><td>× 不可</td><td>使用しても消費されないため</td></tr>
+  </table>
+  <ul>
+    <li>ドロー時に同名カードが手札に既に存在する場合、そのカードはゲームから除外される</li>
+  </ul>
+  
+  <h3>隣接関係（サービス構成シート準拠）</h3>
+  <table>
+    <tr><th>From</th><th>To</th></tr>
+    <tr><td>業務端末</td><td>IdP, VPN Gateway</td></tr>
+    <tr><td>IdP</td><td>クラウド管理コンソール, 社内SaaS</td></tr>
+    <tr><td>VPN Gateway</td><td>運用端末or踏み台サーバ</td></tr>
+    <tr><td>クラウド管理コンソール</td><td>Storage, DB, Backup</td></tr>
+    <tr><td>運用端末or踏み台サーバ</td><td>DB, Storage</td></tr>
+    <tr><td>Web AP</td><td>DB, Storage</td></tr>
+  </table>
+  
+  <h3>Red Team視点: コンポーネント発見ルール</h3>
+  <div class="note">
+    <strong>隣接必須コンポーネントはRed Team視点では初期状態で見えない。</strong><br>
+    侵入済みコンポーネントから隣接関係があるコンポーネントが発見され、初めて表示される。<br>
+    <strong>横展開経路（矢印）も侵入成功時に表示される。</strong>
+  </div>
+  <table>
+    <tr><th>侵入したコンポーネント</th><th>新たに発見されるコンポーネント</th></tr>
+    <tr><td>VPN Gateway</td><td>運用端末or踏み台サーバ</td></tr>
+    <tr><td>IdP</td><td>クラウド管理コンソール, 社内SaaS</td></tr>
+    <tr><td>クラウド管理コンソール</td><td>Storage, DB, Backup</td></tr>
+    <tr><td>運用端末or踏み台サーバ</td><td>DB, Storage</td></tr>
+    <tr><td>Web AP</td><td>DB, Storage</td></tr>
+  </table>
+  <p style="font-size:14px;color:#888;">※ 直接攻撃可能なコンポーネント（業務端末、VPN Gateway、IdP、Web AP、Client等）は最初から見える</p>
+  
+  <h3>逆引き: 横展開先 → 必要な侵入元</h3>
+  <p>内部コンポーネントに横展開するために、どのコンポーネントを先に侵入しておく必要があるか:</p>
+  <table>
+    <tr><th>横展開先</th><th>侵入元として有効なコンポーネント</th></tr>
+    <tr><td><strong>運用端末or踏み台サーバ</strong></td><td>VPN Gateway</td></tr>
+    <tr><td><strong>クラウド管理コンソール</strong></td><td>IdP</td></tr>
+    <tr><td><strong>社内SaaS</strong></td><td>IdP</td></tr>
+    <tr><td><strong>Storage</strong></td><td>クラウド管理コンソール, 運用端末or踏み台サーバ, Web AP</td></tr>
+    <tr><td><strong>DB</strong></td><td>クラウド管理コンソール, 運用端末or踏み台サーバ, Web AP</td></tr>
+    <tr><td><strong>Backup</strong></td><td>クラウド管理コンソール</td></tr>
+  </table>
+</section>
+
+<section id="stock">
+  <h2>株価下落計算</h2>
+  
+  <h3>計算フロー</h3>
+  <div class="code-block">情報資産のあるコンポーネント（企業カードで定義）
+    ×
+攻撃対象のコンポーネント
+    ＝
+該当する情報資産を特定
+    ↓
+情報資産 × 攻撃カードの目的実行の内容（漏洩/削除/停止）
+    ＝
+株価下落率（複数該当時は最大値）</div>
+  
+  <h3>情報資産（4種類）</h3>
+  <table>
+    <tr><th>情報資産</th><th>漏洩</th><th>削除</th><th>停止</th></tr>
+    <tr><td><strong>金融資産情報</strong></td><td style="color:#f06292;">株価-15%</td><td style="color:#ef5350;">株価-20%</td><td style="color:#ff9800;">株価-5%</td></tr>
+    <tr><td><strong>顧客個人情報</strong></td><td style="color:#f06292;">株価-10%</td><td style="color:#ef5350;">株価-20%</td><td style="color:#ff9800;">株価-5%</td></tr>
+    <tr><td><strong>社内認証情報</strong></td><td style="color:#f06292;">隣接無効※</td><td style="color:#ef5350;">コスト-5</td><td style="color:#ff9800;">コスト-1</td></tr>
+    <tr><td><strong>企業秘密</strong></td><td style="color:#f06292;">株価-5%</td><td style="color:#ef5350;">株価-5%</td><td style="color:#ff9800;">株価-5%</td></tr>
+  </table>
+  <div class="note">
+    ※ 社内認証情報漏洩後、「隣接無効」ステータスが付与され:
+    <ul>
+      <li>「全て(直接攻撃可能)」対象の偵察/攻撃カードで内部コンポーネントも攻撃可能</li>
+      <li>横展開カードの「隣接侵入済み」条件が自動的に満たされる</li>
+    </ul>
+  </div>
+</section>
+
+<section id="cards">
+  <h2>カード一覧</h2>
+  
+  <h3>攻撃カード（31種）</h3>
+  
+  <div class="card-section recon">
+    <h4>🔍 偵察（4種）</h4>
+    <table>
+      <tr><th>カード名</th><th>対象</th><th>条件</th><th>偵察Lv</th><th>コスト</th></tr>
+      <tr><td>OSINT</td><td>全て(直接攻撃可能)</td><td>なし</td><td>1</td><td>0</td></tr>
+      <tr><td>アクティブスキャン</td><td>全て(直接攻撃可能)</td><td>なし</td><td>2</td><td>2</td></tr>
+      <tr><td>ソーシャルエンジニアリング</td><td>業務端末</td><td>なし</td><td>3</td><td>4</td></tr>
+      <tr><td>パッシブ偵察(侵入後)</td><td>全て(隣接必須)</td><td>隣接侵入済み</td><td>2</td><td>3</td></tr>
+    </table>
+  </div>
+  
+  <div class="card-section weapon">
+    <h4>🔧 武器化（5種）<span style="color:#ffc107;font-size:14px;margin-left:10px;">※次ターンまで有効</span></h4>
+    <table>
+      <tr><th>カード名</th><th>条件</th><th>バフ効果</th><th>コスト</th></tr>
+      <tr><td>フィッシングサイト構築</td><td>攻撃対象が業務端末の場合</td><td>侵入+1</td><td>2</td></tr>
+      <tr><td>エクスプロイトキット入手</td><td>なし</td><td>侵入+1</td><td>2</td></tr>
+      <tr><td>RaaS契約</td><td>攻撃カードがランサムウェア展開の場合</td><td>実行+1</td><td>2</td></tr>
+      <tr><td>ゼロデイ開発</td><td>技術力★★★以上</td><td>侵入+2</td><td>2</td></tr>
+      <tr><td>マルウェア開発</td><td>技術力★★以上</td><td>実行Lv+2</td><td>2</td></tr>
+    </table>
+  </div>
+  
+  <div class="card-section intrusion">
+    <h4>🚪 侵入 - 直接（8種）</h4>
+    <table>
+      <tr><th>カード名</th><th>対象</th><th>条件</th><th>侵入Lv</th><th>コスト</th></tr>
+      <tr><td>標的型フィッシング</td><td>業務端末</td><td>なし</td><td>2</td><td>3</td></tr>
+      <tr><td>水飲み場攻撃</td><td>業務端末</td><td>なし</td><td>1</td><td>2</td></tr>
+      <tr><td>VPN脆弱性悪用</td><td>VPN Gateway</td><td>なし</td><td>2</td><td>3</td></tr>
+      <tr><td>Webアプリ脆弱性攻撃</td><td>Web AP</td><td>なし</td><td>2</td><td>3</td></tr>
+      <tr><td>インジェクション攻撃</td><td>Web AP</td><td>なし</td><td>1</td><td>2</td></tr>
+      <tr><td>IdP侵害</td><td>IdP</td><td>なし</td><td>2</td><td>3</td></tr>
+      <tr><td>サプライチェーン攻撃</td><td>業務端末, Web AP</td><td>なし</td><td>2</td><td>3</td></tr>
+      <tr><td>内部者買収</td><td>業務端末</td><td>なし</td><td>3</td><td>5</td></tr>
+    </table>
+  </div>
+  
+  <div class="card-section lateral">
+    <h4>↔️ 侵入 - 横展開（2種）</h4>
+    <table>
+      <tr><th>カード名</th><th>対象</th><th>条件</th><th>侵入Lv</th><th>コスト</th></tr>
+      <tr><td>ラテラルムーブメント(脆弱性悪用)</td><td>Storage, DB, Backup, 運用端末or踏み台サーバ</td><td>隣接侵入済み</td><td>2</td><td>1</td></tr>
+      <tr><td>ラテラルムーブメント(認証情報悪用)</td><td>全て</td><td>隣接侵入済み</td><td>2</td><td>1</td></tr>
+    </table>
+  </div>
+  
+  <div class="card-section objective">
+    <h4>🎯 目的実行（5種）</h4>
+    <table>
+      <tr><th>カード名</th><th>種別</th><th>対象</th><th>条件</th><th>実行Lv</th><th>コスト</th></tr>
+      <tr><td>データ窃取・外部送信</td><td>漏洩</td><td>全て</td><td>侵入済み</td><td>2</td><td>2</td></tr>
+      <tr><td>ランサムウェア展開</td><td>漏洩</td><td>業務端末, 運用端末or踏み台サーバ, Backup, Storage</td><td>侵入済み</td><td>2</td><td>2</td></tr>
+      <tr><td>ワイパー攻撃</td><td>削除</td><td>全て</td><td>侵入済み</td><td>2</td><td>4</td></tr>
+      <tr><td>DDoS攻撃</td><td>停止</td><td>Web AP, DNS</td><td>なし</td><td>1</td><td>4</td></tr>
+      <tr><td>インフラ破壊</td><td>停止</td><td>Web AP, 運用端末or踏み台サーバ, Storage, DB, Backup</td><td>侵入済み</td><td>2</td><td>3</td></tr>
+    </table>
+    <p style="margin-top: 1em; font-size: 0.9em;"><strong>社内認証情報漏洩効果:</strong> データ窃取・外部送信、ランサムウェア展開で社内認証情報を漏洩した場合、横展開条件が3ターン解除される。</p>
+    <p style="margin-top: 0.5em; font-size: 0.9em;"><strong>対象資産なし:</strong> 侵入済みでも対象コンポーネントに保管資産がない場合、攻撃は成功するが株価下落は発生しない。停止系カードの場合はサービス停止効果のみ発動。</p>
+  </div>
+  
+  <div class="card-section defense">
+    <h4>🛡️ 対策カード（13種）</h4>
+    <table>
+      <tr><th>カード名</th><th>対象</th><th>コスト</th><th>効果</th></tr>
+      <tr><td>EDR導入</td><td>業務端末, 運用端末or踏み台サーバ</td><td>3</td><td>侵入+1</td></tr>
+      <tr><td>NDR導入</td><td>業務端末, 運用端末or踏み台サーバ</td><td>3</td><td>実行+1</td></tr>
+      <tr><td>MFA導入</td><td>VPN Gateway, IdP, クラウド管理コンソール, 運用端末or踏み台サーバ, 社内SaaS</td><td>2</td><td>侵入+2</td></tr>
+      <tr><td>イミュータブル・バックアップ</td><td>Backup</td><td>2</td><td>実行+2</td></tr>
+      <tr><td>サイバーハイジーン</td><td>全て</td><td>3</td><td>侵入+1</td></tr>
+      <tr><td>ランタイム検知/脅威検知</td><td>Web AP, クラウド管理コンソール, 運用端末or踏み台サーバ, Storage, DB, Backup</td><td>2</td><td>侵入+1, 実行+1</td></tr>
+      <tr><td>アタックサーフェス監視</td><td>全て(直接攻撃可能)</td><td>2</td><td>偵察+1</td></tr>
+      <tr><td>セキュリティ教育</td><td>業務端末, 運用端末or踏み台サーバ</td><td>2</td><td>偵察+1, 侵入+1</td></tr>
+      <tr><td>IAM強化</td><td>クラウド管理コンソール</td><td>2</td><td>侵入+1, 実行+1</td></tr>
+      <tr><td>暗号化強化</td><td>DB, Storage, Backup</td><td>2</td><td>実行+1</td></tr>
+      <tr><td>ペンテスト/インシデント演習</td><td>全て(隣接必須)</td><td>3</td><td>侵入+1, 実行+1</td></tr>
+      <tr><td>WAF強化</td><td>Web AP</td><td>2</td><td>侵入+1</td></tr>
+      <tr><td>CDN導入</td><td>Web AP, DNS</td><td>2</td><td>実行+1</td></tr>
+    </table>
+    <p style="margin-top: 1em; font-size: 0.9em;"><strong>適用ルール:</strong> 同じ対策を同じコンポーネントに<span style="color:#ff6b6b;">重複適用不可</span>。耐性上限は3。初期値0の耐性には適用不可。</p>
+  </div>
+  
+  <div class="card-section component">
+    <h4>🖥️ コンポーネントカード（13種）</h4>
+    <p>各コンポーネントの初期耐性レベル。対策カード適用により上昇する（上限3）。</p>
+    <table>
+      <tr><th>コンポーネント</th><th>レイヤー</th><th>露出</th><th>偵察</th><th>侵入</th><th>実行</th></tr>
+      <tr><td>業務端末</td><td>端末</td><td>直接</td><td>3</td><td>1</td><td>1</td></tr>
+      <tr><td>VPN Gateway</td><td>Gateway</td><td>直接</td><td>1</td><td>1</td><td>1</td></tr>
+      <tr><td>IdP</td><td>Gateway</td><td>直接</td><td>1</td><td>3</td><td>2</td></tr>
+      <tr><td>運用端末or踏み台サーバ</td><td>運用環境</td><td style="color:#ffc107;">隣接必須</td><td>2</td><td>2</td><td>1</td></tr>
+      <tr><td>クラウド管理コンソール</td><td>運用環境</td><td style="color:#ffc107;">隣接必須</td><td>1</td><td>3</td><td>3</td></tr>
+      <tr><td>社内SaaS</td><td>運用環境</td><td style="color:#ffc107;">隣接必須</td><td>2</td><td>3</td><td>2</td></tr>
+      <tr><td>Storage</td><td>Backend</td><td style="color:#ffc107;">隣接必須</td><td>2</td><td>2</td><td>1</td></tr>
+      <tr><td>DB</td><td>Backend</td><td style="color:#ffc107;">隣接必須</td><td>2</td><td>2</td><td>1</td></tr>
+      <tr><td>Backup</td><td>Backend</td><td style="color:#ffc107;">隣接必須</td><td>2</td><td>2</td><td>1</td></tr>
+      <tr><td>Web AP</td><td>Frontend</td><td>直接</td><td>1</td><td>2</td><td>1</td></tr>
+      <tr><td>外部SaaS</td><td>External</td><td>直接</td><td>1</td><td>3</td><td>2</td></tr>
+      <tr><td>DNS</td><td>External</td><td>直接</td><td>1</td><td>3</td><td>2</td></tr>
+      <tr><td>3rd Party JS</td><td>External</td><td>直接</td><td>1</td><td>3</td><td>1</td></tr>
+    </table>
+  </div>
+  
+  <div class="card-section event">
+    <h4>🎲 イベントカード（5種）</h4>
+    <p>各ターン開始時に1枚引き、効果を即時適用する。</p>
+    <table>
+      <tr><th>カード名</th><th>影響</th><th>効果</th></tr>
+      <tr><td>重大脆弱性発覚</td><td style="color:var(--red-primary);">Blue Team不利</td><td>全コンポーネントの侵入耐性-1</td></tr>
+      <tr><td>セキュリティ予算増額</td><td style="color:var(--blue-primary);">Blue Team有利</td><td>Blueコスト+2</td></tr>
+      <tr><td>攻撃グループ摘発</td><td style="color:var(--blue-primary);">Blue Team有利</td><td>Redコスト-2</td></tr>
+      <tr><td>情報漏洩報道</td><td style="color:var(--red-primary);">Blue Team不利</td><td>株価-5%</td></tr>
+      <tr><td>平穏な日</td><td>なし</td><td>効果なし</td></tr>
+    </table>
+  </div>
+</section>
+
+<footer class="footer">
+  © 2025 @tanbablack - SHELLS HACK
+</footer>
+
+</div>
+</body>
+</html>

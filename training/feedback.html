@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SHELLS HACK 研修 振り返りフォーム</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --primary: #00d4ff; --accent: #ffd700;
+  --bg: #0a0e14; --bg-card: rgba(15, 25, 40, 0.95); --bg-input: rgba(0,0,0,0.3);
+  --text: #e8f4f8; --text-dim: #6b8a9e; --border: #2a3a4a;
+  --success: #00ff88; --error: #ff4444;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Noto Sans JP', sans-serif; background: linear-gradient(135deg, #0d1b2a, #1b263b); color: var(--text); min-height: 100vh; padding: 20px; }
+.container { max-width: 800px; margin: 0 auto; }
+.header { text-align: center; margin-bottom: 30px; padding: 30px; background: var(--bg-card); border-radius: 16px; border: 1px solid var(--primary); }
+.header h1 { font-size: 28px; color: var(--primary); margin-bottom: 10px; }
+.header p { color: var(--text-dim); font-size: 14px; }
+.section { background: var(--bg-card); border-radius: 12px; padding: 24px; margin-bottom: 20px; border: 1px solid var(--border); }
+.section-title { font-size: 18px; font-weight: 700; color: var(--accent); margin-bottom: 8px; padding-bottom: 8px; border-bottom: 2px solid var(--accent); }
+.section-desc { font-size: 13px; color: var(--text-dim); margin-bottom: 20px; font-style: italic; }
+.question { margin-bottom: 24px; }
+.question:last-child { margin-bottom: 0; }
+.q-label { font-size: 15px; font-weight: 500; margin-bottom: 8px; }
+.q-label .required { color: var(--error); font-size: 12px; }
+.q-desc { font-size: 12px; color: var(--text-dim); margin-bottom: 10px; }
+input[type="text"], textarea, select { width: 100%; padding: 12px 14px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 14px; font-family: inherit; }
+input:focus, textarea:focus, select:focus { outline: none; border-color: var(--primary); }
+textarea { min-height: 100px; resize: vertical; }
+select option { background: #1a2a3a; }
+.radio-group, .checkbox-group { display: flex; flex-direction: column; gap: 10px; }
+.radio-item, .checkbox-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: all 0.2s; }
+.radio-item:hover, .checkbox-item:hover { border-color: var(--primary); background: rgba(0,212,255,0.1); }
+.radio-item input, .checkbox-item input { width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer; }
+.radio-item label, .checkbox-item label { cursor: pointer; flex: 1; font-size: 14px; }
+.scale-group { display: flex; flex-direction: row; gap: 10px; flex-wrap: wrap; }
+.scale-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-dim); margin-bottom: 8px; }
+.scale-item { display: flex; align-items: center; gap: 6px; padding: 10px 16px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: all 0.2s; }
+.scale-item:hover { border-color: var(--primary); background: rgba(0,212,255,0.1); }
+.scale-item input { width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer; }
+.scale-item label { cursor: pointer; font-size: 16px; font-weight: 600; }
+.submit-btn { display: block; width: 100%; padding: 16px; font-size: 18px; font-weight: 700; background: linear-gradient(135deg, var(--primary), var(--accent)); border: none; border-radius: 12px; color: var(--bg); cursor: pointer; transition: all 0.2s; margin-top: 20px; }
+.submit-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,212,255,0.4); }
+.submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.error-msg { color: var(--error); font-size: 12px; margin-top: 6px; display: none; }
+.question.error .error-msg { display: block; }
+.question.error input, .question.error textarea, .question.error select { border-color: var(--error); }
+.hidden { display: none !important; }
+.toast { position: fixed; top: 20px; right: 20px; padding: 16px 24px; border-radius: 8px; font-weight: 500; z-index: 1000; animation: slideIn 0.3s ease; }
+.toast.success { background: var(--success); color: var(--bg); }
+.toast.error { background: var(--error); color: #fff; }
+@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+.complete-screen { display: none; text-align: center; padding: 60px 30px; }
+.complete-screen.visible { display: block; }
+.complete-screen h2 { font-size: 32px; color: var(--success); margin-bottom: 20px; }
+.complete-screen p { font-size: 16px; color: var(--text-dim); margin-bottom: 15px; line-height: 1.8; }
+.complete-screen a { color: var(--primary); }
+.form-content.hidden { display: none; }
+.session-input { margin-bottom: 20px; padding: 20px; background: rgba(255,215,0,0.1); border: 1px solid var(--accent); border-radius: 8px; }
+.session-input label { display: block; font-size: 14px; color: var(--accent); margin-bottom: 8px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>🛡️ SHELLS HACK サイバーセキュリティ研修</h1>
+    <p>振り返りフォーム（所要時間：約5分）</p>
+  </div>
+
+  <div class="form-content" id="formContent">
+    <div class="section">
+      <div class="question" data-required="true">
+        <div class="q-label">研修タグ <span class="required">*必須</span></div>
+        <div class="q-desc">講師から案内されたIDを入力してください</div>
+        <input type="text" id="trainingTag" placeholder="例: 20250115-ABC">
+        <div class="error-msg">研修タグを入力してください</div>
+      </div>
+    </div>
+
+    <!-- セクション1: 基本情報 -->
+    <div class="section">
+      <div class="section-title">セクション1: 基本情報</div>
+      <div class="question" data-required="true">
+        <div class="q-label">Q1. 業種を選択してください <span class="required">*必須</span></div>
+        <select id="q1_industry">
+          <option value="">選択してください</option>
+          <option value="金融・保険">金融・保険</option>
+          <option value="製造">製造</option>
+          <option value="情報通信・IT">情報通信・IT</option>
+          <option value="小売・流通">小売・流通</option>
+          <option value="医療・ヘルスケア">医療・ヘルスケア</option>
+          <option value="官公庁・自治体">官公庁・自治体</option>
+          <option value="エネルギー・インフラ">エネルギー・インフラ</option>
+          <option value="建設・不動産">建設・不動産</option>
+          <option value="教育・研究機関">教育・研究機関</option>
+          <option value="その他">その他</option>
+        </select>
+        <div class="error-msg">業種を選択してください</div>
+      </div>
+      <div class="question hidden" id="q2_wrap">
+        <div class="q-label">Q2.「その他」の場合、業種を記入してください</div>
+        <input type="text" id="q2_industry_other" placeholder="業種を入力">
+      </div>
+      <div class="question">
+        <div class="q-label">Q3. 従業員規模</div>
+        <select id="q3_employee_size">
+          <option value="">選択してください</option>
+          <option value="〜100名">〜100名</option>
+          <option value="101〜500名">101〜500名</option>
+          <option value="501〜1,000名">501〜1,000名</option>
+          <option value="1,001〜5,000名">1,001〜5,000名</option>
+          <option value="5,001名以上">5,001名以上</option>
+        </select>
+      </div>
+      <div class="question" data-required="true">
+        <div class="q-label">Q4. 職種 <span class="required">*必須</span></div>
+        <div class="radio-group">
+          <div class="radio-item"><input type="radio" name="q4" id="q4_1" value="情報システム / IT部門"><label for="q4_1">情報システム / IT部門</label></div>
+          <div class="radio-item"><input type="radio" name="q4" id="q4_2" value="セキュリティ専門職（事業会社・Blue Team）"><label for="q4_2">セキュリティ専門職（事業会社・Blue Team）</label></div>
+          <div class="radio-item"><input type="radio" name="q4" id="q4_3" value="セキュリティ専門職（事業会社・Red Team）"><label for="q4_3">セキュリティ専門職（事業会社・Red Team）</label></div>
+          <div class="radio-item"><input type="radio" name="q4" id="q4_4" value="経営・管理職"><label for="q4_4">経営・管理職</label></div>
+          <div class="radio-item"><input type="radio" name="q4" id="q4_5" value="事業部門（営業・企画等）"><label for="q4_5">事業部門（営業・企画等）</label></div>
+          <div class="radio-item"><input type="radio" name="q4" id="q4_6" value="ペネトレーションテスター / セキュリティコンサル"><label for="q4_6">ペネトレーションテスター / セキュリティコンサル</label></div>
+          <div class="radio-item"><input type="radio" name="q4" id="q4_7" value="その他"><label for="q4_7">その他</label></div>
+        </div>
+        <div class="error-msg">職種を選択してください</div>
+      </div>
+      <div class="question" data-required="true">
+        <div class="q-label">Q5. どちらのチームをプレイしましたか？ <span class="required">*必須</span></div>
+        <div class="radio-group">
+          <div class="radio-item"><input type="radio" name="q5" id="q5_1" value="Blue Team（防御側）のみ"><label for="q5_1">Blue Team（防御側）のみ</label></div>
+          <div class="radio-item"><input type="radio" name="q5" id="q5_2" value="Red Team（攻撃側）のみ"><label for="q5_2">Red Team（攻撃側）のみ</label></div>
+          <div class="radio-item"><input type="radio" name="q5" id="q5_3" value="両方プレイした"><label for="q5_3">両方プレイした</label></div>
+        </div>
+        <div class="error-msg">チームを選択してください</div>
+      </div>
+    </div>
+
+    <!-- セクション2: 研修前の状態 -->
+    <div class="section">
+      <div class="section-title">セクション2: 研修前の状態</div>
+      <div class="section-desc">研修を受ける前の状態を思い出してお答えください</div>
+      <div class="question" data-required="true">
+        <div class="q-label" id="q6_label">Q6. <span class="q-text">攻撃の流れ（キルチェーン）を理解できていましたか？</span> <span class="required">*必須</span></div>
+        <div class="scale-labels" id="q6_scale"><span>1 = 全く理解できていなかった</span><span>5 = 十分理解できていた</span></div>
+        <div class="scale-group">
+          <div class="scale-item"><input type="radio" name="q6" id="q6_1" value="1"><label for="q6_1">1</label></div>
+          <div class="scale-item"><input type="radio" name="q6" id="q6_2" value="2"><label for="q6_2">2</label></div>
+          <div class="scale-item"><input type="radio" name="q6" id="q6_3" value="3"><label for="q6_3">3</label></div>
+          <div class="scale-item"><input type="radio" name="q6" id="q6_4" value="4"><label for="q6_4">4</label></div>
+          <div class="scale-item"><input type="radio" name="q6" id="q6_5" value="5"><label for="q6_5">5</label></div>
+        </div>
+        <div class="error-msg">選択してください</div>
+      </div>
+      <div class="question" data-required="true">
+        <div class="q-label" id="q7_label">Q7. <span class="q-text">対策の優先順位を判断できていましたか？</span> <span class="required">*必須</span></div>
+        <div class="scale-labels" id="q7_scale"><span>1 = 全くできていなかった</span><span>5 = 十分できていた</span></div>
+        <div class="scale-group">
+          <div class="scale-item"><input type="radio" name="q7" id="q7_1" value="1"><label for="q7_1">1</label></div>
+          <div class="scale-item"><input type="radio" name="q7" id="q7_2" value="2"><label for="q7_2">2</label></div>
+          <div class="scale-item"><input type="radio" name="q7" id="q7_3" value="3"><label for="q7_3">3</label></div>
+          <div class="scale-item"><input type="radio" name="q7" id="q7_4" value="4"><label for="q7_4">4</label></div>
+          <div class="scale-item"><input type="radio" name="q7" id="q7_5" value="5"><label for="q7_5">5</label></div>
+        </div>
+        <div class="error-msg">選択してください</div>
+      </div>
+      <div class="question" data-required="true">
+        <div class="q-label" id="q8_label">Q8. <span class="q-text">自社のセキュリティ対策を攻撃者視点から見て有効かを説明できていましたか？</span> <span class="required">*必須</span></div>
+        <div class="scale-labels" id="q8_scale"><span>1 = 全く説明できていなかった</span><span>5 = 十分説明できていた</span></div>
+        <div class="scale-group">
+          <div class="scale-item"><input type="radio" name="q8" id="q8_1" value="1"><label for="q8_1">1</label></div>
+          <div class="scale-item"><input type="radio" name="q8" id="q8_2" value="2"><label for="q8_2">2</label></div>
+          <div class="scale-item"><input type="radio" name="q8" id="q8_3" value="3"><label for="q8_3">3</label></div>
+          <div class="scale-item"><input type="radio" name="q8" id="q8_4" value="4"><label for="q8_4">4</label></div>
+          <div class="scale-item"><input type="radio" name="q8" id="q8_5" value="5"><label for="q8_5">5</label></div>
+        </div>
+        <div class="error-msg">選択してください</div>
+      </div>
+    </div>
+
+    <!-- セクション3: 研修後の状態 -->
+    <div class="section">
+      <div class="section-title">セクション3: 研修後の状態</div>
+      <div class="section-desc">研修を終えた現在の状態をお答えください</div>
+      <div class="question" data-required="true">
+        <div class="q-label" id="q9_label">Q9. <span class="q-text">攻撃の流れ（キルチェーン）を理解できましたか？</span> <span class="required">*必須</span></div>
+        <div class="scale-labels" id="q9_scale"><span>1 = 全く理解できなかった</span><span>5 = 十分理解できた</span></div>
+        <div class="scale-group">
+          <div class="scale-item"><input type="radio" name="q9" id="q9_1" value="1"><label for="q9_1">1</label></div>
+          <div class="scale-item"><input type="radio" name="q9" id="q9_2" value="2"><label for="q9_2">2</label></div>
+          <div class="scale-item"><input type="radio" name="q9" id="q9_3" value="3"><label for="q9_3">3</label></div>
+          <div class="scale-item"><input type="radio" name="q9" id="q9_4" value="4"><label for="q9_4">4</label></div>
+          <div class="scale-item"><input type="radio" name="q9" id="q9_5" value="5"><label for="q9_5">5</label></div>
+        </div>
+        <div class="error-msg">選択してください</div>
+      </div>
+      <div class="question" data-required="true">
+        <div class="q-label" id="q10_label">Q10. <span class="q-text">対策の優先順位を判断できるようになりましたか？</span> <span class="required">*必須</span></div>
+        <div class="scale-labels" id="q10_scale"><span>1 = 全くできない</span><span>5 = 十分できる</span></div>
+        <div class="scale-group">
+          <div class="scale-item"><input type="radio" name="q10" id="q10_1" value="1"><label for="q10_1">1</label></div>
+          <div class="scale-item"><input type="radio" name="q10" id="q10_2" value="2"><label for="q10_2">2</label></div>
+          <div class="scale-item"><input type="radio" name="q10" id="q10_3" value="3"><label for="q10_3">3</label></div>
+          <div class="scale-item"><input type="radio" name="q10" id="q10_4" value="4"><label for="q10_4">4</label></div>
+          <div class="scale-item"><input type="radio" name="q10" id="q10_5" value="5"><label for="q10_5">5</label></div>
+        </div>
+        <div class="error-msg">選択してください</div>
+      </div>
+      <div class="question" data-required="true">
+        <div class="q-label" id="q11_label">Q11. <span class="q-text">自社のセキュリティ対策を攻撃者視点から見た有効性を説明できそうですか？</span> <span class="required">*必須</span></div>
+        <div class="scale-labels" id="q11_scale"><span>1 = 全く説明できなさそう</span><span>5 = 十分説明できそう</span></div>
+        <div class="scale-group">
+          <div class="scale-item"><input type="radio" name="q11" id="q11_1" value="1"><label for="q11_1">1</label></div>
+          <div class="scale-item"><input type="radio" name="q11" id="q11_2" value="2"><label for="q11_2">2</label></div>
+          <div class="scale-item"><input type="radio" name="q11" id="q11_3" value="3"><label for="q11_3">3</label></div>
+          <div class="scale-item"><input type="radio" name="q11" id="q11_4" value="4"><label for="q11_4">4</label></div>
+          <div class="scale-item"><input type="radio" name="q11" id="q11_5" value="5"><label for="q11_5">5</label></div>
+        </div>
+        <div class="error-msg">選択してください</div>
+      </div>
+    </div>
+
+    <!-- セクション4A: Blue Team振り返り -->
+    <div class="section hidden" id="section4A">
+      <div class="section-title">セクション4A: Blue Team（防御側）振り返り</div>
+      <div class="question" data-required="true" data-conditional="blue">
+        <div class="q-label">Q12B. 対策で最も難しかったことは何ですか？ <span class="required">*必須</span></div>
+        <textarea id="q12b_difficulty" placeholder="例：限られた予算で何を優先すべきか判断が難しかった"></textarea>
+        <div class="error-msg">回答を入力してください</div>
+      </div>
+      <div class="question" data-required="true" data-conditional="blue">
+        <div class="q-label">Q13B. ゲームで失敗した対策はありますか？その原因は？ <span class="required">*必須</span></div>
+        <textarea id="q13b_failed" placeholder="例：EDRを入れたが内部犯行に対応できなかった"></textarea>
+        <div class="error-msg">回答を入力してください</div>
+      </div>
+      <div class="question" data-required="true" data-conditional="blue">
+        <div class="q-label">Q14B. 自社で脆弱だと感じたポイントはどこですか？ <span class="required">*必須</span></div>
+        <div class="checkbox-group" id="q14b_vulnerable">
+          <div class="checkbox-item"><input type="checkbox" id="q14b_1" value="外部公開サーバ"><label for="q14b_1">外部公開サーバ（Webサーバ等）</label></div>
+          <div class="checkbox-item"><input type="checkbox" id="q14b_2" value="認証・アクセス管理"><label for="q14b_2">認証・アクセス管理（MFA等）</label></div>
+          <div class="checkbox-item"><input type="checkbox" id="q14b_3" value="エンドポイント"><label for="q14b_3">エンドポイント（PC・端末）</label></div>
+          <div class="checkbox-item"><input type="checkbox" id="q14b_4" value="ネットワーク分離"><label for="q14b_4">ネットワーク分離・セグメンテーション</label></div>
+          <div class="checkbox-item"><input type="checkbox" id="q14b_5" value="監視・検知"><label for="q14b_5">監視・検知体制</label></div>
+          <div class="checkbox-item"><input type="checkbox" id="q14b_6" value="内部犯行対策"><label for="q14b_6">内部犯行対策</label></div>
+          <div class="checkbox-item"><input type="checkbox" id="q14b_7" value="バックアップ"><label for="q14b_7">バックアップ・復旧体制</label></div>
+        </div>
+        <div class="error-msg">1つ以上選択してください</div>
+      </div>
+    </div>
+
+    <!-- セクション4B: Red Team振り返り -->
+    <div class="section hidden" id="section4B">
+      <div class="section-title">セクション4B: Red Team（攻撃側）振り返り</div>
+      <div class="question" data-required="true" data-conditional="red">
+        <div class="q-label">Q12R. 攻撃で最も難しかったことは何ですか？ <span class="required">*必須</span></div>
+        <textarea id="q12r_difficulty" placeholder="例：偵察で見つけた脆弱性をどう活用するか判断が難しかった"></textarea>
+        <div class="error-msg">回答を入力してください</div>
+      </div>
+      <div class="question" data-required="true" data-conditional="red">
+        <div class="q-label">Q13R. 攻撃が失敗した原因は何でしたか？ <span class="required">*必須</span></div>
+        <textarea id="q13r_failed" placeholder="例：MFAに阻まれて認証情報を使えなかった"></textarea>
+        <div class="error-msg">回答を入力してください</div>
+      </div>
+      <div class="question" data-required="true" data-conditional="red">
+        <div class="q-label">Q14R. 攻撃者視点で「これは報告すべき」と思った脆弱性は？ <span class="required">*必須</span></div>
+        <div class="checkbox-group" id="q14r_report">
+          <div class="checkbox-item"><input type="checkbox" id="q14r_1" value="公開サーバの脆弱性"><label for="q14r_1">公開サーバの脆弱性</label></div>
+          <div class="checkbox-item"><input type="checkbox" id="q14r_2" value="パスワード管理の甘さ"><label for="q14r_2">パスワード管理の甘さ</label></div>
+          <div class="checkbox-item"><input type="checkbox" id="q14r_3" value="MFA未導入"><label for="q14r_3">MFA未導入</label></div>
+          <div class="checkbox-item"><input type="checkbox" id="q14r_4" value="横展開が容易"><label for="q14r_4">横展開が容易（ネットワーク分離不足）</label></div>
+          <div class="checkbox-item"><input type="checkbox" id="q14r_5" value="検知の遅さ"><label for="q14r_5">検知の遅さ</label></div>
+          <div class="checkbox-item"><input type="checkbox" id="q14r_6" value="重要データへのアクセス制御"><label for="q14r_6">重要データへのアクセス制御不足</label></div>
+        </div>
+        <div class="error-msg">1つ以上選択してください</div>
+      </div>
+    </div>
+
+    <!-- セクション5: アクションプラン -->
+    <div class="section">
+      <div class="section-title">セクション5: アクションプラン</div>
+      <div class="question" data-required="true">
+        <div class="q-label">Q15. 研修後1週間以内に実行するアクションを1つ記入してください <span class="required">*必須</span></div>
+        <div class="q-desc">具体的で実行可能なアクションを1つだけ記入してください</div>
+        <textarea id="q15_action" placeholder="例：自社のMFA導入状況を情報システム部に確認する"></textarea>
+        <div class="error-msg">アクションを入力してください</div>
+      </div>
+      <div class="question">
+        <div class="q-label">Q16. そのアクションで期待される効果は？</div>
+        <textarea id="q16_impact" placeholder="例：未導入のシステムがあれば優先的に対策できる"></textarea>
+      </div>
+    </div>
+
+    <!-- セクション6: 研修評価 -->
+    <div class="section">
+      <div class="section-title">セクション6: 研修評価</div>
+      <div class="question" data-required="true">
+        <div class="q-label">Q17. 研修は役に立ちましたか？ <span class="required">*必須</span></div>
+        <div class="scale-labels"><span>1 = 全く役に立たなかった</span><span>5 = 非常に役に立った</span></div>
+        <div class="scale-group">
+          <div class="scale-item"><input type="radio" name="q17" id="q17_1" value="1"><label for="q17_1">1</label></div>
+          <div class="scale-item"><input type="radio" name="q17" id="q17_2" value="2"><label for="q17_2">2</label></div>
+          <div class="scale-item"><input type="radio" name="q17" id="q17_3" value="3"><label for="q17_3">3</label></div>
+          <div class="scale-item"><input type="radio" name="q17" id="q17_4" value="4"><label for="q17_4">4</label></div>
+          <div class="scale-item"><input type="radio" name="q17" id="q17_5" value="5"><label for="q17_5">5</label></div>
+        </div>
+        <div class="error-msg">選択してください</div>
+      </div>
+      <div class="question" data-required="true">
+        <div class="q-label">Q18. ゲーム形式の研修はいかがでしたか？ <span class="required">*必須</span></div>
+        <div class="scale-labels"><span>1 = 全く良くない</span><span>5 = とても良い</span></div>
+        <div class="scale-group">
+          <div class="scale-item"><input type="radio" name="q18" id="q18_1" value="1"><label for="q18_1">1</label></div>
+          <div class="scale-item"><input type="radio" name="q18" id="q18_2" value="2"><label for="q18_2">2</label></div>
+          <div class="scale-item"><input type="radio" name="q18" id="q18_3" value="3"><label for="q18_3">3</label></div>
+          <div class="scale-item"><input type="radio" name="q18" id="q18_4" value="4"><label for="q18_4">4</label></div>
+          <div class="scale-item"><input type="radio" name="q18" id="q18_5" value="5"><label for="q18_5">5</label></div>
+        </div>
+        <div class="error-msg">選択してください</div>
+      </div>
+      <div class="question">
+        <div class="q-label">Q19. 改善点やご意見があればお聞かせください</div>
+        <textarea id="q19_feedback" placeholder="自由記述"></textarea>
+      </div>
+    </div>
+
+    <button type="button" class="submit-btn" id="submitBtn">送信する</button>
+  </div>
+
+  <div class="complete-screen" id="completeScreen">
+    <h2>✅ 送信完了</h2>
+    <p>ご回答ありがとうございました。</p>
+    <p>Q15で記入いただいたアクションの実行をお願いいたします。</p>
+    <p>フォローアップ研修（1〜2週間後）で振り返りを行います。</p>
+    <button class="submit-btn" style="max-width:300px;margin:30px auto 20px;" onclick="downloadResult()">📥 回答内容をダウンロード</button>
+    <p><a href="/" target="_blank">SHELLS HACK を開く →</a></p>
+  </div>
+</div>
+
+<script src="../firebase-config.js"></script>
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
+import { getDatabase, ref, push, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js';
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+let submittedData = null;
+
+// Q6-Q11の質問定義
+const QUESTIONS = {
+  blue: {
+    q6: { text: '攻撃の流れ（キルチェーン）を理解できていましたか？', scale: ['1 = 全く理解できていなかった', '5 = 十分理解できていた'] },
+    q7: { text: '対策の優先順位を判断できていましたか？', scale: ['1 = 全くできていなかった', '5 = 十分できていた'] },
+    q8: { text: '自社のセキュリティ対策を攻撃者視点から見て有効かを説明できていましたか？', scale: ['1 = 全く説明できていなかった', '5 = 十分説明できていた'] },
+    q9: { text: '攻撃の流れ（キルチェーン）を理解できましたか？', scale: ['1 = 全く理解できなかった', '5 = 十分理解できた'] },
+    q10: { text: '対策の優先順位を判断できるようになりましたか？', scale: ['1 = 全くできない', '5 = 十分できる'] },
+    q11: { text: '自社のセキュリティ対策を攻撃者視点から見た有効性を説明できそうですか？', scale: ['1 = 全く説明できなさそう', '5 = 十分説明できそう'] }
+  },
+  red: {
+    q6: { text: '防御側の思考プロセス（リソース制約・優先順位）を理解できていましたか？', scale: ['1 = 全く理解できていなかった', '5 = 十分理解できていた'] },
+    q7: { text: '報告書の優先度付けが防御側に響くか判断できていましたか？', scale: ['1 = 全くできていなかった', '5 = 十分できていた'] },
+    q8: { text: '自分の報告書が顧客の行動変容につながる自信はありましたか？', scale: ['1 = 全く自信がなかった', '5 = 十分自信があった'] },
+    q9: { text: '防御側の思考プロセスを理解できましたか？', scale: ['1 = 全く理解できなかった', '5 = 十分理解できた'] },
+    q10: { text: '報告書の優先度付けを改善できそうですか？', scale: ['1 = 全く改善できなさそう', '5 = 十分改善できそう'] },
+    q11: { text: '「刺さる報告書」を書く自信が持てるようになりましたか？', scale: ['1 = 全く自信がない', '5 = 十分自信がある'] }
+  }
+};
+
+// Red Team判定用の職種
+const RED_JOBS = [
+  'セキュリティ専門職（事業会社・Red Team）',
+  'ペネトレーションテスター / セキュリティコンサル'
+];
+
+function isRedTeamJob() {
+  const q4 = document.querySelector('input[name="q4"]:checked');
+  return q4 && RED_JOBS.includes(q4.value);
+}
+
+function updateQuestions() {
+  const mode = isRedTeamJob() ? 'red' : 'blue';
+  const qs = QUESTIONS[mode];
+  ['q6', 'q7', 'q8', 'q9', 'q10', 'q11'].forEach(qId => {
+    const labelSpan = document.querySelector(`#${qId}_label .q-text`);
+    const scaleEl = document.getElementById(`${qId}_scale`);
+    if (labelSpan && qs[qId]) {
+      labelSpan.textContent = qs[qId].text;
+    }
+    if (scaleEl && qs[qId]) {
+      const spans = scaleEl.querySelectorAll('span');
+      if (spans.length >= 2) {
+        spans[0].textContent = qs[qId].scale[0];
+        spans[1].textContent = qs[qId].scale[1];
+      }
+    }
+  });
+}
+
+// 初期表示
+updateQuestions();
+
+document.getElementById('q1_industry').addEventListener('change', function() {
+  document.getElementById('q2_wrap').classList.toggle('hidden', this.value !== 'その他');
+});
+
+// Q4変更時に質問を切り替え
+document.querySelectorAll('input[name="q4"]').forEach(radio => {
+  radio.addEventListener('change', updateQuestions);
+});
+
+document.querySelectorAll('input[name="q5"]').forEach(radio => {
+  radio.addEventListener('change', function() {
+    const val = this.value;
+    document.getElementById('section4A').classList.toggle('hidden', !val.includes('Blue') && !val.includes('両方'));
+    document.getElementById('section4B').classList.toggle('hidden', !val.includes('Red') && !val.includes('両方'));
+  });
+});
+
+function validate() {
+  let valid = true;
+  document.querySelectorAll('.question.error').forEach(q => q.classList.remove('error'));
+  document.querySelectorAll('.question[data-required="true"]').forEach(q => {
+    const conditional = q.dataset.conditional;
+    if (conditional) {
+      const teamVal = document.querySelector('input[name="q5"]:checked')?.value || '';
+      if (conditional === 'blue' && !teamVal.includes('Blue') && !teamVal.includes('両方')) return;
+      if (conditional === 'red' && !teamVal.includes('Red') && !teamVal.includes('両方')) return;
+    }
+    const input = q.querySelector('input[type="text"], textarea, select');
+    const radios = q.querySelectorAll('input[type="radio"]');
+    const checkboxes = q.querySelectorAll('input[type="checkbox"]');
+    let filled = false;
+    if (input) filled = input.value.trim() !== '';
+    if (radios.length > 0) filled = q.querySelector('input[type="radio"]:checked') !== null;
+    if (checkboxes.length > 0) filled = q.querySelector('input[type="checkbox"]:checked') !== null;
+    if (!filled) { q.classList.add('error'); valid = false; }
+  });
+  return valid;
+}
+
+document.getElementById('submitBtn').addEventListener('click', async function() {
+  if (!validate()) {
+    showToast('必須項目を入力してください', 'error');
+    document.querySelector('.question.error')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+  this.disabled = true;
+  this.textContent = '送信中...';
+  const getRadio = name => document.querySelector(`input[name="${name}"]:checked`)?.value || '';
+  const getCheckboxes = id => Array.from(document.querySelectorAll(`#${id} input:checked`)).map(c => c.value);
+  const q6 = parseInt(getRadio('q6')) || 0, q7 = parseInt(getRadio('q7')) || 0, q8 = parseInt(getRadio('q8')) || 0;
+  const q9 = parseInt(getRadio('q9')) || 0, q10 = parseInt(getRadio('q10')) || 0, q11 = parseInt(getRadio('q11')) || 0;
+  const questionMode = isRedTeamJob() ? 'red' : 'blue';
+  const data = {
+    trainingTag: document.getElementById('trainingTag').value.trim(),
+    submittedAt: serverTimestamp(),
+    q1_industry: document.getElementById('q1_industry').value,
+    q2_industry_other: document.getElementById('q2_industry_other').value.trim(),
+    q3_employee_size: document.getElementById('q3_employee_size').value,
+    q4_job_role: getRadio('q4'),
+    q4_question_mode: questionMode,
+    q5_team_played: getRadio('q5'),
+    q6_pre_killchain: q6, q7_pre_priority: q7, q8_pre_confidence: q8,
+    q9_post_killchain: q9, q10_post_priority: q10, q11_post_confidence: q11,
+    q12b_difficulty: document.getElementById('q12b_difficulty').value.trim(),
+    q13b_failed: document.getElementById('q13b_failed').value.trim(),
+    q14b_vulnerable: getCheckboxes('q14b_vulnerable'),
+    q12r_difficulty: document.getElementById('q12r_difficulty').value.trim(),
+    q13r_failed: document.getElementById('q13r_failed').value.trim(),
+    q14r_report: getCheckboxes('q14r_report'),
+    q15_action: document.getElementById('q15_action').value.trim(),
+    q16_impact: document.getElementById('q16_impact').value.trim(),
+    q17_useful: parseInt(getRadio('q17')) || 0,
+    q18_game_format: parseInt(getRadio('q18')) || 0,
+    q19_feedback: document.getElementById('q19_feedback').value.trim(),
+    score_killchain_change: q9 - q6, score_priority_change: q10 - q7, score_confidence_change: q11 - q8,
+    hostname: location.hostname || 'unknown'
+  };
+  try {
+    await push(ref(db, 'training_feedback/responses'), data);
+    submittedData = { ...data, submittedAt: new Date().toLocaleString('ja-JP') };
+    document.getElementById('formContent').classList.add('hidden');
+    document.getElementById('completeScreen').classList.add('visible');
+    showToast('送信完了', 'success');
+  } catch (e) {
+    console.error(e);
+    showToast('送信に失敗しました', 'error');
+    this.disabled = false;
+    this.textContent = '送信する';
+  }
+});
+
+function showToast(msg, type) {
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+}
+
+window.downloadResult = function() {
+  if (!submittedData) return;
+  const d = submittedData;
+  const avgChange = ((d.score_killchain_change||0) + (d.score_priority_change||0) + (d.score_confidence_change||0)) / 3;
+  const text = `════════════════════════════════════════
+  SHELLS HACK 研修 振り返りフォーム 回答控え
+════════════════════════════════════════
+
+送信日時: ${d.submittedAt}
+研修タグ: ${d.trainingTag || '-'}
+
+【基本情報】
+業種: ${d.q1_industry}${d.q2_industry_other ? ` (${d.q2_industry_other})` : ''}
+従業員規模: ${d.q3_employee_size || '-'}
+職種: ${d.q4_job_role}
+質問モード: ${d.q4_question_mode === 'red' ? 'Red Team向け' : 'Blue Team向け'}
+プレイチーム: ${d.q5_team_played}
+
+【研修前後の変化】
+                    研修前 → 研修後  (変化)
+設問1（理解度）:       ${d.q6_pre_killchain}  →  ${d.q9_post_killchain}    (${d.score_killchain_change >= 0 ? '+' : ''}${d.score_killchain_change})
+設問2（判断力）:       ${d.q7_pre_priority}  →  ${d.q10_post_priority}    (${d.score_priority_change >= 0 ? '+' : ''}${d.score_priority_change})
+設問3（自信度）:       ${d.q8_pre_confidence}  →  ${d.q11_post_confidence}    (${d.score_confidence_change >= 0 ? '+' : ''}${d.score_confidence_change})
+────────────────────────────────────────
+平均変容スコア: ${avgChange >= 0 ? '+' : ''}${avgChange.toFixed(1)}
+
+【Blue Team振り返り】
+難しかった攻撃: ${d.q12b_difficulty || '-'}
+防御失敗の原因: ${d.q13b_failed || '-'}
+脆弱と感じた資産: ${(d.q14b_vulnerable||[]).join(', ') || '-'}
+
+【Red Team振り返り】
+難しかった防御: ${d.q12r_difficulty || '-'}
+攻撃失敗の原因: ${d.q13r_failed || '-'}
+報告書に書くべき点: ${(d.q14r_report||[]).join(', ') || '-'}
+
+【アクション宣言】
+1週間以内に実行すること:
+${d.q15_action || '-'}
+
+期待される効果:
+${d.q16_impact || '-'}
+
+【評価】
+研修の有用性: ${d.q17_useful}/5
+ゲーム形式の評価: ${d.q18_game_format}/5
+
+【改善点・意見】
+${d.q19_feedback || '-'}
+
+════════════════════════════════════════
+※ この控えはフォローアップ研修時にご活用ください
+════════════════════════════════════════`;
+
+  const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `SHELLS_HACK_回答控え_${d.trainingTag || 'self'}_${new Date().toISOString().slice(0,10)}.txt`;
+  link.click();
+};
+</script>
+</body>
+</html>

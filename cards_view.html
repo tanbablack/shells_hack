@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<link rel="icon" type="image/x-icon" href="img/favicon.ico">
+<meta charset="UTF-8">
+<title>SHELLS HACK - カード一覧</title>
+<style>
+@page { size: A4; margin: 8mm; }
+@media print { .page-break { page-break-after: always; } .no-print { display: none; } body { background: #fff; } }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Hiragino Kaku Gothic Pro', 'Yu Gothic', sans-serif; background: #1a1a2e; padding: 15px; }
+h1 { text-align: center; color: #00ff88; margin: 15px 0; font-size: 18pt; text-shadow: 0 0 10px #00ff88; }
+h2 { text-align: center; color: #4fc3f7; margin: 20px 0 10px; font-size: 14pt; }
+.tabs { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+.tab { padding: 10px 20px; border: 2px solid; border-radius: 8px; cursor: pointer; font-weight: bold; transition: all 0.2s; background: transparent; }
+.tab.blue { border-color: #4fc3f7; color: #4fc3f7; }
+.tab.red { border-color: #ef5350; color: #ef5350; }
+.tab.green { border-color: #4db6ac; color: #4db6ac; }
+.tab.gold { border-color: #ffd54f; color: #ffd54f; }
+.tab:hover, .tab.active { transform: scale(1.05); }
+.tab.blue.active { background: #4fc3f7; color: #1a1a2e; }
+.tab.red.active { background: #ef5350; color: #1a1a2e; }
+.tab.green.active { background: #4db6ac; color: #1a1a2e; }
+.tab.gold.active { background: #ffd54f; color: #1a1a2e; }
+.card-section { display: none; }
+.card-section.active { display: block; }
+.subcategory-title { text-align: left; color: #ff9800; margin: 15px 0 10px 10px; font-size: 12pt; border-left: 3px solid #ff9800; padding-left: 10px; }
+.card-container { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 20px; }
+.card { width: 280px; border-radius: 10px; padding: 12px; display: flex; flex-direction: column; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
+.card-company { background: linear-gradient(180deg, #1565C0, #1E88E5); border: 2px solid #64B5F6; color: #fff; }
+.card-actor { background: linear-gradient(180deg, #b71c1c, #d32f2f); border: 2px solid #ef5350; color: #fff; }
+.card-component { background: linear-gradient(180deg, #004d40, #00796b); border: 2px solid #4db6ac; color: #fff; }
+.card-countermeasure { background: linear-gradient(180deg, #0d47a1, #1976d2); border: 2px solid #64b5f6; color: #fff; }
+.card-attack { background: linear-gradient(180deg, #b71c1c, #d32f2f); border: 2px solid #ef5350; color: #fff; }
+.card-attack.recon { background: linear-gradient(180deg, #1a237e, #283593); border: 2px solid #7986cb; }
+.card-attack.weapon { background: linear-gradient(180deg, #4a148c, #6a1b9a); border: 2px solid #ab47bc; }
+.card-attack.intrusion { background: linear-gradient(180deg, #b71c1c, #c62828); border: 2px solid #ef5350; }
+.card-attack.action { background: linear-gradient(180deg, #880e4f, #ad1457); border: 2px solid #f06292; }
+.card-event-blue { background: linear-gradient(180deg, #1565C0, #1976D2); border: 2px solid #64B5F6; color: #fff; }
+.card-event-red { background: linear-gradient(180deg, #b71c1c, #c62828); border: 2px solid #ef5350; color: #fff; }
+.card-event-none { background: linear-gradient(180deg, #616161, #757575); border: 2px solid #9E9E9E; color: #fff; }
+.card-header { background: rgba(0,0,0,0.2); border-radius: 6px; padding: 8px; text-align: center; margin-bottom: 8px; }
+.card-icon { font-size: 32px; margin-bottom: 4px; }
+.card-name { font-size: 14px; font-weight: bold; }
+.card-type { font-size: 10px; opacity: 0.8; margin-top: 2px; }
+.stats-row { display: flex; justify-content: space-around; margin: 8px 0; gap: 6px; }
+.stat { text-align: center; background: rgba(0,0,0,0.2); border-radius: 4px; padding: 4px 8px; flex: 1; }
+.stat-label { font-size: 9px; opacity: 0.8; }
+.stat-value { font-size: 12px; color: #ffd54f; font-weight: bold; }
+.card-field { font-size: 11px; background: rgba(0,0,0,0.25); padding: 6px 8px; border-radius: 4px; margin: 4px 0; }
+.card-field .field-label { font-size: 9px; color: #ffd54f; display: block; margin-bottom: 2px; }
+.card-field .field-value { color: #fff; }
+.card-desc { font-size: 11px; line-height: 1.4; background: rgba(0,0,0,0.2); border-radius: 4px; padding: 8px; margin: 4px 0; }
+.lv-grid { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0; }
+.lv-item { background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 4px; font-size: 10px; }
+.lv-item .lv-label { color: #aaa; }
+.lv-item .lv-value { color: #4CAF50; font-weight: bold; }
+.asset-box { background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.3); border-radius: 4px; padding: 6px; margin: 6px 0; font-size: 10px; }
+.asset-box .asset-title { color: #ffd54f; font-weight: bold; margin-bottom: 4px; }
+.asset-row { margin: 2px 0; }
+.asset-row .asset-name { color: #ffd54f; }
+.purpose-box { background: rgba(255,215,0,0.15); border: 1px solid #ffd54f; border-radius: 4px; padding: 6px; margin: 6px 0; }
+.purpose-label { font-size: 9px; color: #ffd54f; }
+.purpose-text { font-size: 11px; }
+.event-effects { font-size: 11px; background: rgba(0,0,0,0.3); padding: 8px; border-radius: 4px; margin-top: 6px; }
+.event-effects .effect-title { color: #ffd54f; margin-bottom: 4px; font-weight: bold; }
+.card-footer { text-align: center; font-size: 8px; opacity: 0.5; margin-top: auto; padding-top: 6px; }
+.copyright-footer { background: rgba(0,0,0,0.8); color: #888; font-size: 10px; text-align: center; padding: 10px; margin-top: 30px; border-top: 1px solid rgba(255,255,255,0.1); }
+</style>
+</head>
+<body>
+<h1>🛡️⚔️ SHELLS HACK</h1>
+
+<div class="tabs">
+  <button class="tab blue active" onclick="showSection('companies')">🏢 企業</button>
+  <button class="tab red" onclick="showSection('actors')">👤 アクター</button>
+  <button class="tab green" onclick="showSection('components')">🖥️ コンポーネント</button>
+  <button class="tab red" onclick="showSection('attacks')">⚔️ 攻撃</button>
+  <button class="tab blue" onclick="showSection('countermeasures')">🛡️ 対策</button>
+  <button class="tab gold" onclick="showSection('events')">⚡ イベント</button>
+</div>
+
+<div id="companies" class="card-section active"></div>
+<div id="actors" class="card-section"></div>
+<div id="components" class="card-section"></div>
+<div id="attacks" class="card-section"></div>
+<div id="countermeasures" class="card-section"></div>
+<div id="events" class="card-section"></div>
+
+<script src="cards.js"></script>
+<script>
+const ICONS = {
+  // 企業
+  'ニュース配信メディア': '📰', '伝統金融機関': '🏦', '暗号資産系企業': '₿', 'EC': '🛒', 'HRTech': '👥', '動画配信メディア': '🎬', '重工産業企業': '🏭',
+  // アクター
+  '国家支援 金銭調達集団': '💰', '国家支援 産業スパイ集団': '🕵️', '産業スパイ集団': '🔍', 'ハクティビスト集団': '✊',
+  // コンポーネント
+  '業務端末': '💻', 'VPN Gateway': '🔐', 'IdP': '🔑', '運用端末or踏み台サーバ': '🖥️',
+  'クラウド管理コンソール': '☁️', '社内SaaS': '📦', 'DB': '🗄️', 'Internal API': '⚙️', 'Backup': '💾',
+  'Web AP': '🌍', 'Storage': '📁', '外部SaaS': '🔗', 'DNS': '📡', '3rd Party JS': '📜',
+  // 攻撃カテゴリ
+  '偵察': '🔍', '武器化': '🔧', '侵入': '💥', '目的実行': '🎯',
+  // 対策
+  'EDR': '🔬', 'SIEM': '📊', 'WAF': '🛡️', 'MFA': '🔐', 'ネットワーク': '🔗', 'バックアップ': '💾', '脆弱性': '🐛',
+  'セキュリティ教育': '📚', 'DDoS': '🌊', 'IAM': '👤', '暗号化': '🔒', 'ゼロトラスト': '🚫', 'SOC': '👁️', 'ペネトレーション': '🎯', 'インシデント': '🚨',
+  // イベント
+  '重大脆弱性': '⚠️', 'セキュリティ予算': '💰', '攻撃グループ摘発': '👮', '情報漏洩報道': '📺', '平穏な日': '☀️'
+};
+
+function getIcon(name) {
+  for (const [key, icon] of Object.entries(ICONS)) {
+    if (name.includes(key)) return icon;
+  }
+  return '📋';
+}
+
+function showSection(id) {
+  document.querySelectorAll('.card-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+
+function renderCompanies() {
+  const section = document.getElementById('companies');
+  section.innerHTML = '<h2>🏢 企業カード（' + GAME_DATA.companies.length + '種）</h2><div class="card-container" id="companyGrid"></div>';
+  const grid = document.getElementById('companyGrid');
+  GAME_DATA.companies.forEach(c => {
+    const icon = getIcon(c.name);
+    let assetHtml = '';
+    if (c.assets) {
+      assetHtml = '<div class="asset-box"><div class="asset-title">📦 資産保管先</div>';
+      Object.entries(c.assets).forEach(([asset, locs]) => {
+        if (locs.length > 0) {
+          assetHtml += '<div class="asset-row"><span class="asset-name">' + asset + ':</span> ' + locs.join(', ') + '</div>';
+        }
+      });
+      assetHtml += '</div>';
+    }
+    grid.innerHTML += `
+      <div class="card card-company">
+        <div class="card-header">
+          <div class="card-icon">${icon}</div>
+          <div class="card-name">${c.name}</div>
+          <div class="card-type">BLUE TEAM ─ 企業カード</div>
+        </div>
+        <div class="stats-row">
+          <div class="stat"><div class="stat-label">資金力</div><div class="stat-value">${'★'.repeat(c.fund)}${'☆'.repeat(5-c.fund)}</div></div>
+          <div class="stat"><div class="stat-label">堅牢性</div><div class="stat-value">${'★'.repeat(c.robust)}${'☆'.repeat(5-c.robust)}</div></div>
+        </div>
+        <div class="card-desc">${c.desc}</div>
+        ${assetHtml}
+        <div class="card-footer">SHELLS HACK</div>
+      </div>`;
+  });
+}
+
+function renderActors() {
+  const section = document.getElementById('actors');
+  section.innerHTML = '<h2>👤 攻撃アクター（' + GAME_DATA.actors.length + '種）</h2><div class="card-container" id="actorGrid"></div>';
+  const grid = document.getElementById('actorGrid');
+  GAME_DATA.actors.forEach(a => {
+    const icon = getIcon(a.name);
+    grid.innerHTML += `
+      <div class="card card-actor">
+        <div class="card-header">
+          <div class="card-icon">${icon}</div>
+          <div class="card-name">${a.name}</div>
+          <div class="card-type">RED TEAM ─ アクター</div>
+        </div>
+        <div class="stats-row">
+          <div class="stat"><div class="stat-label">資金力</div><div class="stat-value">${'★'.repeat(a.fund)}${'☆'.repeat(5-a.fund)}</div></div>
+          <div class="stat"><div class="stat-label">技術力</div><div class="stat-value">${'★'.repeat(a.tech)}${'☆'.repeat(5-a.tech)}</div></div>
+        </div>
+        <div class="purpose-box"><div class="purpose-label">🏆 勝利条件</div><div class="purpose-text">${a.purpose}</div></div>
+        <div class="card-desc">${a.desc}</div>
+        <div class="card-footer">SHELLS HACK</div>
+      </div>`;
+  });
+}
+
+function renderComponents() {
+  const section = document.getElementById('components');
+  section.innerHTML = '<h2>🖥️ コンポーネント（' + GAME_DATA.components.length + '種）</h2><div class="card-container" id="componentGrid"></div>';
+  const grid = document.getElementById('componentGrid');
+  GAME_DATA.components.forEach(c => {
+    const icon = getIcon(c.name);
+    let lvHtml = '<div class="lv-grid">';
+    Object.entries(c.init_lv).forEach(([k, v]) => {
+      lvHtml += '<div class="lv-item"><span class="lv-label">' + k + '</span> <span class="lv-value">Lv.' + v + '</span></div>';
+    });
+    lvHtml += '</div>';
+    const expLabel = c.exposure === 'direct' ? '🟢 直接攻撃可' : '🟠 隣接必須';
+    grid.innerHTML += `
+      <div class="card card-component">
+        <div class="card-header">
+          <div class="card-icon">${icon}</div>
+          <div class="card-name">${c.name}</div>
+          <div class="card-type">${c.layer} ─ ${expLabel}</div>
+        </div>
+        <div class="card-field"><span class="field-label">🛡️ 初期耐性</span>${lvHtml}</div>
+        <div class="card-desc">${c.desc}</div>
+        <div class="card-footer">SHELLS HACK</div>
+      </div>`;
+  });
+}
+
+function renderAttacks() {
+  const section = document.getElementById('attacks');
+  const categories = ['偵察', '武器化', '侵入', '目的実行'];
+  const catIcons = { '偵察': '🔍', '武器化': '🔧', '侵入': '💥', '目的実行': '🎯' };
+  const catClasses = { '偵察': 'recon', '武器化': 'weapon', '侵入': 'intrusion', '目的実行': 'action' };
+  
+  let html = '<h2>⚔️ 攻撃カード（' + GAME_DATA.attacks.length + '枚）</h2>';
+  
+  categories.forEach(cat => {
+    const cards = GAME_DATA.attacks.filter(a => a.category === cat);
+    if (cards.length === 0) return;
+    
+    // 侵入カードは横展開とそれ以外を分ける
+    if (cat === '侵入') {
+      const direct = cards.filter(c => c.subcategory !== '横展開');
+      const lateral = cards.filter(c => c.subcategory === '横展開');
+      
+      html += '<div class="subcategory-title">' + catIcons[cat] + ' ' + cat + '（直接）（' + direct.length + '枚）</div><div class="card-container">';
+      direct.forEach(c => { html += renderAttackCard(c, catClasses[cat]); });
+      html += '</div>';
+      
+      html += '<div class="subcategory-title">' + catIcons[cat] + ' ' + cat + '（横展開）（' + lateral.length + '枚）</div><div class="card-container">';
+      lateral.forEach(c => { html += renderAttackCard(c, catClasses[cat]); });
+      html += '</div>';
+    } else {
+      html += '<div class="subcategory-title">' + catIcons[cat] + ' ' + cat + '（' + cards.length + '枚）</div><div class="card-container">';
+      cards.forEach(c => { html += renderAttackCard(c, catClasses[cat]); });
+      html += '</div>';
+    }
+  });
+  
+  section.innerHTML = html;
+}
+
+function renderAttackCard(c, catClass) {
+  const icon = getIcon(c.category);
+  const targetText = Array.isArray(c.target) ? c.target.join(', ') : c.target;
+  
+  let lvHtml = '';
+  if (c.lv) {
+    lvHtml = '<div class="lv-grid">';
+    Object.entries(c.lv).forEach(([k, v]) => {
+      lvHtml += '<div class="lv-item"><span class="lv-label">' + k + 'Lv</span> <span class="lv-value">' + v + '</span></div>';
+    });
+    lvHtml += '</div>';
+  }
+  if (c.buff) {
+    lvHtml = '<div class="lv-grid">';
+    Object.entries(c.buff).forEach(([k, v]) => {
+      lvHtml += '<div class="lv-item"><span class="lv-label">' + k + '</span> <span class="lv-value">+' + v + '</span></div>';
+    });
+    lvHtml += '</div>';
+  }
+  
+  const condHtml = c.condition && c.condition !== 'なし' ? '<div class="card-field" style="color:#ff8a80;"><span class="field-label">⚠️ 条件</span><span class="field-value">' + c.condition + '</span></div>' : '';
+  
+  // action_type表示（目的実行カード）
+  const actionTypeColors = { '漏洩': '#f06292', '削除': '#ef5350', '停止': '#ff9800' };
+  const actionTypeBadge = c.action_type ? `<span style="background:${actionTypeColors[c.action_type] || '#888'};color:#fff;padding:2px 6px;border-radius:3px;font-size:10px;margin-left:5px;">${c.action_type}</span>` : '';
+  
+  return `
+    <div class="card card-attack ${catClass}">
+      <div class="card-header">
+        <div class="card-icon">${icon}</div>
+        <div class="card-name">${c.name}${actionTypeBadge}</div>
+        <div class="card-type">RED TEAM ─ ${c.category}${c.subcategory ? '/' + c.subcategory : ''}</div>
+      </div>
+      <div class="stats-row">
+        <div class="stat"><div class="stat-label">コスト</div><div class="stat-value">${c.cost}</div></div>
+      </div>
+      <div class="card-field"><span class="field-label">🎯 対象</span><span class="field-value">${targetText}</span></div>
+      ${condHtml}
+      <div class="card-field"><span class="field-label">📊 攻撃力</span>${lvHtml}</div>
+      <div class="card-desc">${c.desc}</div>
+      <div class="card-field"><span class="field-label">⚡ 効果</span><span class="field-value">${c.effect}</span></div>
+      <div class="card-footer">SHELLS HACK</div>
+    </div>`;
+}
+
+function renderCountermeasures() {
+  const section = document.getElementById('countermeasures');
+  section.innerHTML = '<h2>🛡️ 対策カード（' + GAME_DATA.countermeasures.length + '種）</h2><div class="card-container" id="cmGrid"></div>';
+  const grid = document.getElementById('cmGrid');
+  GAME_DATA.countermeasures.forEach(c => {
+    const icon = getIcon(c.name);
+    const targetText = Array.isArray(c.target) ? c.target.join(', ') : c.target;
+    let effectHtml = '<div class="lv-grid">';
+    Object.entries(c.effect).forEach(([k, v]) => {
+      effectHtml += '<div class="lv-item"><span class="lv-label">' + k + '</span> <span class="lv-value">+' + v + '</span></div>';
+    });
+    effectHtml += '</div>';
+    grid.innerHTML += `
+      <div class="card card-countermeasure">
+        <div class="card-header">
+          <div class="card-icon">${icon}</div>
+          <div class="card-name">${c.name}</div>
+          <div class="card-type">BLUE TEAM ─ 対策カード</div>
+        </div>
+        <div class="stats-row">
+          <div class="stat"><div class="stat-label">コスト</div><div class="stat-value">${c.cost}</div></div>
+        </div>
+        <div class="card-field"><span class="field-label">🎯 対象</span><span class="field-value">${targetText}</span></div>
+        <div class="card-field"><span class="field-label">📈 効果</span>${effectHtml}</div>
+        <div class="card-desc">${c.desc}</div>
+        <div class="card-footer">SHELLS HACK</div>
+      </div>`;
+  });
+}
+
+function renderEvents() {
+  const section = document.getElementById('events');
+  section.innerHTML = '<h2>⚡ イベントカード（' + GAME_DATA.events.length + '種）</h2><div class="card-container" id="eventGrid"></div>';
+  const grid = document.getElementById('eventGrid');
+  GAME_DATA.events.forEach(e => {
+    const icon = getIcon(e.name);
+    const cardClass = e.target.includes('有利') ? 'card-event-blue' : (e.target === 'なし' ? 'card-event-none' : 'card-event-red');
+    
+    let effectHtml = '<div class="event-effects"><div class="effect-title">📊 効果</div>';
+    const effects = e.effects || {};
+    let hasEffect = false;
+    
+    if (effects.defense_mod) {
+      Object.entries(effects.defense_mod).forEach(([param, val]) => {
+        const sign = val > 0 ? '+' : '';
+        effectHtml += '<div>' + param + ': ' + sign + val + '</div>';
+        hasEffect = true;
+      });
+    }
+    if (effects.funds_bonus) {
+      if (effects.funds_bonus.blue) { effectHtml += '<div>Blueコスト: +' + effects.funds_bonus.blue + '</div>'; hasEffect = true; }
+      if (effects.funds_bonus.red) { effectHtml += '<div>Redコスト: +' + effects.funds_bonus.red + '</div>'; hasEffect = true; }
+    }
+    if (effects.funds_penalty) {
+      if (effects.funds_penalty.blue) { effectHtml += '<div>Blueコスト: ' + effects.funds_penalty.blue + '</div>'; hasEffect = true; }
+      if (effects.funds_penalty.red) { effectHtml += '<div>Redコスト: ' + effects.funds_penalty.red + '</div>'; hasEffect = true; }
+    }
+    if (effects.stock_mod) {
+      const sign = effects.stock_mod > 0 ? '+' : '';
+      effectHtml += '<div>株価: ' + sign + effects.stock_mod + '%</div>';
+      hasEffect = true;
+    }
+    if (!hasEffect) effectHtml += '<div>効果なし</div>';
+    effectHtml += '</div>';
+    
+    grid.innerHTML += `
+      <div class="card ${cardClass}">
+        <div class="card-header">
+          <div class="card-icon">${icon}</div>
+          <div class="card-name">${e.name}</div>
+          <div class="card-type">イベント ─ ${e.target}</div>
+        </div>
+        <div class="card-desc">${e.desc}</div>
+        ${effectHtml}
+        <div class="card-footer">SHELLS HACK</div>
+      </div>`;
+  });
+}
+
+renderCompanies();
+renderActors();
+renderComponents();
+renderAttacks();
+renderCountermeasures();
+renderEvents();
+</script>
+<footer class="copyright-footer">© 2025 @tanbablack - SHELLS HACK</footer>
+</body>
+</html>

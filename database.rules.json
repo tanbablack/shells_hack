@@ -1,0 +1,39 @@
+{
+  "rules": {
+    "rooms": {
+      "$roomId": {
+        ".write": "newData.child('hostname').val() == null || newData.child('hostname').val() == 'shells-hack.com' || newData.child('hostname').val() == 'stg.shells-hack.com'",
+        ".read": true
+      }
+    },
+    
+    "game_logs": {
+      ".read": true,
+      "$sessionId": {
+        ".write": "newData.child('meta').child('hostname').val() == null || newData.child('meta').child('hostname').val() == 'shells-hack.com' || newData.child('meta').child('hostname').val() == 'stg.shells-hack.com'"
+      }
+    },
+    
+    "training_feedback": {
+      "responses": {
+        ".read": true,
+        "$id": {
+          ".write": "newData.child('hostname').val() == null || newData.child('hostname').val() == 'shells-hack.com' || newData.child('hostname').val() == 'stg.shells-hack.com'"
+        }
+      },
+      "followup_responses": {
+        ".read": true,
+        "$id": {
+          ".write": "newData.child('hostname').val() == null || newData.child('hostname').val() == 'shells-hack.com' || newData.child('hostname').val() == 'stg.shells-hack.com'"
+        }
+      }
+    },
+    
+    "training_followup": {
+      "$id": {
+        ".write": true,
+        ".read": true
+      }
+    }
+  }
+}

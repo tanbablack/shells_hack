@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SHELLS HACK ファシリテーターガイド</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0f0a1a;
+      --bg-card: rgba(20, 15, 35, 0.95);
+      --text-light: #ffffff;
+      --text-dim: #9988aa;
+      --success: #00ff88;
+      --warning: #ffaa00;
+      --border: #3a2a4a;
+      --primary: #9966ff;
+      --primary-dark: #6633cc;
+      --accent: #bb99ff;
+      --bg-gradient: linear-gradient(135deg, #0f0a1a 0%, #1a0d2d 100%);
+    }
+    
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+      background: var(--bg-gradient);
+      color: var(--text-light);
+      line-height: 1.7;
+      min-height: 100vh;
+    }
+    
+    /* Header */
+    .header {
+      background: var(--bg-card);
+      border-bottom: 3px solid var(--accent);
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+    }
+    
+    .header-top {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 16px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    
+    .logo {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      color: var(--accent);
+      letter-spacing: 2px;
+    }
+    
+    .header h1 {
+      font-size: 20px;
+      font-weight: 700;
+    }
+    
+    /* Navigation */
+    .nav {
+      background: rgba(0,0,0,0.3);
+      padding: 10px 40px;
+      border-top: 1px solid var(--border);
+    }
+    
+    .nav-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    
+    .nav a {
+      color: var(--text-dim);
+      text-decoration: none;
+      font-size: 12px;
+      padding: 5px 12px;
+      border-radius: 4px;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    
+    .nav a:hover {
+      background: rgba(0,212,255,0.1);
+      color: var(--accent);
+    }
+    
+    .nav a.active {
+      background: var(--accent);
+      color: var(--bg-dark);
+      font-weight: 700;
+    }
+    
+    .nav a.highlight {
+      color: var(--success);
+    }
+    
+    /* Main */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px;
+      padding-top: 140px;
+    }
+    
+    /* Section */
+    .section {
+      margin-bottom: 60px;
+      scroll-margin-top: 120px;
+    }
+    
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid var(--border);
+    }
+    
+    .section-header h2 {
+      font-size: 24px;
+      color: var(--accent);
+    }
+    
+    .section-icon {
+      font-size: 28px;
+    }
+    
+    /* Cards */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    
+    .card-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    /* Checklist */
+    .checklist {
+      list-style: none;
+    }
+    
+    .checklist li {
+      padding: 10px 0 10px 36px;
+      position: relative;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    
+    .checklist li::before {
+      content: '☐';
+      position: absolute;
+      left: 0;
+      color: var(--accent);
+      font-size: 18px;
+    }
+    
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 20px;
+    }
+    
+    .tab {
+      padding: 10px 20px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      border-radius: 8px 8px 0 0;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.2s;
+      color: var(--text-dim);
+    }
+    
+    .tab:hover {
+      background: rgba(0,212,255,0.1);
+    }
+    
+    .tab.active {
+      background: var(--bg-card);
+      border-bottom-color: var(--bg-card);
+      color: var(--accent);
+    }
+    
+    .tab-content {
+      display: none;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    /* Timetable */
+    .timetable {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    
+    .timetable th {
+      background: rgba(0, 102, 255, 0.2);
+      padding: 14px 16px;
+      text-align: left;
+      font-weight: 700;
+      border-bottom: 2px solid var(--accent);
+      white-space: nowrap;
+    }
+    
+    .timetable td {
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    
+    .timetable tr:hover td {
+      background: rgba(255,255,255,0.03);
+    }
+    
+    .time-col {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--accent);
+      width: 70px;
+      white-space: nowrap;
+    }
+    
+    .duration-col {
+      width: 80px;
+      color: var(--text-dim);
+      white-space: nowrap;
+    }
+    
+    .highlight-row td {
+      background: rgba(0, 102, 255, 0.12) !important;
+    }
+    
+    .highlight-row td:first-child {
+      border-left: 3px solid var(--accent);
+    }
+    
+    /* Primary Link */
+    .primary-link {
+      display: block;
+      background: linear-gradient(135deg, rgba(0,102,255,0.2), rgba(0,212,255,0.1));
+      border: 2px solid var(--accent);
+      border-radius: 16px;
+      padding: 30px;
+      text-align: center;
+      margin: 24px 0;
+      text-decoration: none;
+      transition: all 0.3s;
+    }
+    
+    .primary-link:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0,212,255,0.2);
+    }
+    
+    .primary-link .label {
+      font-size: 14px;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+    }
+    
+    .primary-link .url {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 24px;
+      color: var(--accent);
+      font-weight: 600;
+    }
+    
+    .primary-link .note {
+      font-size: 13px;
+      color: var(--text-dim);
+      margin-top: 12px;
+    }
+    
+    /* URL Box */
+    .url-box {
+      background: rgba(0, 212, 255, 0.1);
+      border: 2px solid var(--accent);
+      border-radius: 12px;
+      padding: 30px;
+      text-align: center;
+      margin: 24px 0;
+    }
+    
+    .url-box .label {
+      font-size: 14px;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+    }
+    
+    .url-box .url {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 28px;
+      color: var(--accent);
+      font-weight: 600;
+    }
+    
+    /* Info Grid */
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin: 20px 0;
+    }
+    
+    .info-card {
+      background: rgba(255,255,255,0.03);
+      border-radius: 8px;
+      padding: 16px;
+    }
+    
+    .info-card .label {
+      font-size: 12px;
+      color: var(--text-dim);
+      margin-bottom: 4px;
+    }
+    
+    .info-card .value {
+      font-size: 18px;
+      font-weight: 700;
+    }
+    
+    /* Table Simple */
+    .simple-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      margin: 16px 0;
+    }
+    
+    .simple-table th, .simple-table td {
+      padding: 12px 16px;
+      border: 1px solid var(--border);
+      text-align: left;
+    }
+    
+    .simple-table th {
+      background: rgba(0,102,255,0.15);
+      font-weight: 600;
+    }
+    
+    .simple-table a {
+      color: #cc99ff;
+      text-decoration: none;
+    }
+    
+    .simple-table a:hover {
+      color: #ddbbff;
+      text-decoration: underline;
+    }
+    
+    /* Overview Grid */
+    .overview-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    
+    .overview-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    
+    .overview-label {
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+    
+    .overview-value {
+      font-size: 14px;
+      font-weight: 600;
+    }
+    
+    .overview-goal {
+      display: flex;
+      gap: 16px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      font-size: 14px;
+    }
+    
+    .overview-goal .overview-label {
+      min-width: 80px;
+    }
+    
+    /* Material Items */
+    .material-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    
+    .material-item:last-child {
+      border-bottom: none;
+    }
+    
+    .material-label {
+      width: 280px;
+      flex-shrink: 0;
+      color: var(--text-dim);
+      font-size: 14px;
+    }
+    
+    .material-item a {
+      width: 200px;
+      flex-shrink: 0;
+      color: #cc99ff;
+      text-decoration: none;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+    }
+    
+    .material-item a:hover {
+      color: #ddbbff;
+      text-decoration: underline;
+    }
+    
+    /* Insight Box */
+    .insight-box {
+      background: rgba(0, 212, 255, 0.08);
+      border-left: 4px solid var(--accent);
+      padding: 20px 24px;
+      margin: 24px 0;
+      font-size: 16px;
+      border-radius: 0 8px 8px 0;
+    }
+    
+    /* Script Box */
+    .script-box {
+      background: rgba(0,0,0,0.4);
+      border-left: 4px solid var(--accent);
+      border-radius: 0 8px 8px 0;
+      padding: 20px 24px;
+      margin: 16px 0;
+      font-size: 15px;
+      white-space: pre-wrap;
+    }
+    
+    /* Copy Button */
+    .copy-btn {
+      display: inline-block;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+      margin-top: 12px;
+      transition: all 0.2s;
+    }
+    
+    .copy-btn:hover {
+      background: var(--accent);
+      color: var(--bg-dark);
+    }
+    
+    .copy-btn.copied {
+      background: var(--success);
+      border-color: var(--success);
+      color: var(--bg-dark);
+    }
+    
+    .copy-btn-small {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .copy-btn-small:hover {
+      background: rgba(0,212,255,0.2);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    
+    .copy-btn-small.copied {
+      background: var(--success);
+      border-color: var(--success);
+      color: var(--bg-dark);
+    }
+    
+    /* Link Row */
+    .link-row {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    .link-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: rgba(0,0,0,0.3);
+      border-radius: 8px;
+      flex-wrap: wrap;
+    }
+    
+    .link-label {
+      font-size: 14px;
+      color: var(--text-dim);
+      min-width: 180px;
+    }
+    
+    .link-url {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      color: var(--accent);
+      text-decoration: none;
+    }
+    
+    .link-url:hover {
+      text-decoration: underline;
+    }
+    
+    /* Link Box Inline */
+    .link-box-inline {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: rgba(0,212,255,0.08);
+      border-radius: 8px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+    
+    .link-box-inline span {
+      font-size: 14px;
+      color: var(--text-dim);
+    }
+    
+    .link-box-inline a {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      color: var(--accent);
+      text-decoration: none;
+    }
+    
+    .link-box-inline a:hover {
+      text-decoration: underline;
+    }
+    
+    /* Discussion List */
+    .discussion-list {
+      list-style: none;
+    }
+    
+    .discussion-list li {
+      font-size: 18px;
+      padding: 16px 0 16px 50px;
+      position: relative;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    
+    .discussion-list li::before {
+      content: attr(data-num);
+      position: absolute;
+      left: 0;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 16px;
+      color: var(--accent);
+      font-weight: 700;
+    }
+    
+    .discussion-list .sub {
+      font-size: 14px;
+      color: var(--text-dim);
+      margin-top: 6px;
+    }
+    
+    /* FAQ */
+    .faq-item {
+      margin-bottom: 16px;
+    }
+    
+    .faq-q {
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+    
+    .faq-q::before {
+      content: 'Q: ';
+    }
+    
+    .faq-a {
+      padding-left: 16px;
+      color: var(--text-dim);
+    }
+    
+    .faq-a::before {
+      content: 'A: ';
+      font-weight: 600;
+      color: var(--text-light);
+    }
+    
+    /* Footer */
+    .footer {
+      text-align: center;
+      padding: 40px;
+      color: var(--text-dim);
+      font-size: 13px;
+      border-top: 1px solid var(--border);
+    }
+    
+    @media (max-width: 768px) {
+      .header-top { 
+        padding: 12px 20px; 
+        flex-direction: column; 
+        align-items: flex-start; 
+      }
+      .nav { padding: 8px 20px; }
+      .nav-inner { justify-content: flex-start; }
+      .nav a { font-size: 11px; padding: 4px 8px; }
+      .container { 
+        padding: 20px; 
+        padding-top: 160px;
+      }
+      .section { scroll-margin-top: 160px; }
+      .header h1 { font-size: 16px; }
+      .primary-link .url { font-size: 18px; }
+      .url-box .url { font-size: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-top">
+    <div class="logo">SHELLS HACK</div>
+    <h1>ファシリテーターガイド</h1>
+  </div>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="#overview">📋 概要</a>
+      <a href="#materials">📦 素材</a>
+      <a href="#checklist">✅ 事前準備</a>
+      <a href="#mail">📧 事前案内メール</a>
+      <a href="#timetable">⏱️ タイムテーブル</a>
+      <a href="#troubleshoot">🔧 トラブルシュート</a>
+      <a href="#followup">🔄 フォローアップ</a>
+    </div>
+  </nav>
+</header>
+
+<div class="container">
+
+  <!-- 概要 -->
+  <section class="section" id="overview">
+    <div class="section-header">
+      <span class="section-icon">📋</span>
+      <h2>研修概要</h2>
+    </div>
+    
+    <div class="card">
+      <div class="overview-grid">
+        <div class="overview-item"><span class="overview-label">所要時間</span><span class="overview-value">120分</span></div>
+        <div class="overview-item"><span class="overview-label">人数</span><span class="overview-value">2〜20名（ペア形式）</span></div>
+        <div class="overview-item"><span class="overview-label">形式</span><span class="overview-value">集合研修</span></div>
+        <div class="overview-item"><span class="overview-label">必要環境</span><span class="overview-value">PC + ブラウザ + インターネット</span></div>
+      </div>
+      <div class="overview-goal">
+        <span class="overview-label">学習目標</span>
+        <span>攻撃と防御の両視点を体験し、セキュリティ対策の優先順位を判断できるようになる</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 研修素材 -->
+  <section class="section" id="materials">
+    <div class="section-header">
+      <span class="section-icon">📦</span>
+      <h2>研修素材</h2>
+    </div>
+    
+    <div class="card">
+      <div class="material-item">
+        <span class="material-label">研修スライド</span>
+        <a href="slides.html" target="_blank">slides.html</a>
+        <button class="copy-btn-small" onclick="copyRelativeUrl('slides.html', this)">📋</button>
+      </div>
+
+      <div class="material-item">
+        <span class="material-label">ゲーム</span>
+        <a href="../index.html" target="_blank">../index.html</a>
+        <button class="copy-btn-small" onclick="copyRelativeUrl('../index.html', this)">📋</button>
+      </div>
+      <div class="material-item">
+        <span class="material-label">振り返りシート（研修後）</span>
+        <a href="../training/feedback.html" target="_blank">../training/feedback.html</a>
+        <button class="copy-btn-small" onclick="copyRelativeUrl('../training/feedback.html', this)">📋</button>
+      </div>
+      <div class="material-item">
+        <span class="material-label">振り返りシート（フォローアップ）</span>
+        <a href="../training/followup.html" target="_blank">../training/followup.html</a>
+        <button class="copy-btn-small" onclick="copyRelativeUrl('../training/followup.html', this)">📋</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 事前準備 -->
+  <section class="section" id="checklist">
+    <div class="section-header">
+      <span class="section-icon">✅</span>
+      <h2>事前準備チェックリスト</h2>
+    </div>
+    
+    <div class="card">
+      <div class="card-title">📅 1週間前</div>
+      <ul class="checklist">
+        <li>参加者リストの確定（2〜20名推奨）</li>
+        <li>日程・会議室の確保（120分）</li>
+        <li>参加者へ事前案内メール送付</li>
+      </ul>
+    </div>
+    
+    <div class="card">
+      <div class="card-title">📋 前日</div>
+      <ul class="checklist">
+        <li>研修スライド・ゲームの動作確認</li>
+        <li>振り返りシートURL準備</li>
+        <li>参加者を2人1組にペア分け（奇数の場合は3人1組を1つ作る）</li>
+      </ul>
+    </div>
+    
+    <div class="card">
+      <div class="card-title">🎯 当日開始前</div>
+      <ul class="checklist">
+        <li>プロジェクターの確認</li>
+        <li>参加者全員のPCでURL接続確認</li>
+        <li>ペア表の掲示/共有</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 事前案内メール -->
+  <section class="section" id="mail">
+    <div class="section-header">
+      <span class="section-icon">📧</span>
+      <h2>事前案内メール</h2>
+    </div>
+    
+    <div class="card">
+      <div class="card-title">参加者向け案内メール</div>
+      <div class="script-box" id="mail-template">件名：【事前案内】SHELLS HACK サイバーセキュリティ研修
+
+各位
+
+下記の通り、サイバーセキュリティ研修を実施いたします。
+
+■ 日時
+[日付] [時間]（120分）
+
+■ 場所
+[会議室名]
+
+■ 必要なもの
+・PC
+・ブラウザ（Chrome推奨）
+・インターネット接続環境
+
+■ 事前準備
+下記URLに事前にアクセスし、表示されることをご確認ください。
+https://shells-hack.com/
+
+■ 振り返りシート（研修後に記入）
+[フィードバックシートURL]
+
+■ 研修内容
+サイバー攻撃シミュレーションゲーム「SHELLS HACK」を通じて、
+攻撃と防御の両視点を体験し、セキュリティ対策の優先順位を学びます。
+
+ご不明点があればお問い合わせください。</div>
+      <button class="copy-btn" onclick="copyToClipboard(document.getElementById('mail-template').textContent, this)">📋 メール文面をコピー</button>
+    </div>
+  </section>
+
+  <!-- タイムテーブル -->
+  <section class="section" id="timetable">
+    <div class="section-header">
+      <span class="section-icon">⏱️</span>
+      <h2>タイムテーブル</h2>
+    </div>
+    
+    <div class="card">
+      <table class="timetable">
+        <tr><th>時間</th><th>所要時間</th><th>内容</th><th>補足アクション</th></tr>
+        <tr><td class="time-col">0:00</td><td class="duration-col">10分</td><td>学習目標の確認（導入）</td><td>ペア表共有</td></tr>
+        <tr><td class="time-col">0:10</td><td class="duration-col">5分</td><td>ゲームチュートリアル</td><td>ゲームURL共有</td></tr>
+        <tr class="highlight-row"><td class="time-col">0:15</td><td class="duration-col">45分</td><td>🎮 2人ペアで一緒にプレイ（ソロプレイ）</td><td>巡回</td></tr>
+        <tr><td class="time-col">1:00</td><td class="duration-col">10分</td><td>休憩</td><td>−</td></tr>
+        <tr class="highlight-row"><td class="time-col">1:10</td><td class="duration-col">25分</td><td>🎮 対戦プレイ（同じペアでオンライン対戦）</td><td>巡回</td></tr>
+        <tr><td class="time-col">1:35</td><td class="duration-col">10分</td><td>振り返りシート記入</td><td>シートURL共有</td></tr>
+        <tr><td class="time-col">1:45</td><td class="duration-col">10分</td><td>4人でディスカッション</td><td>−</td></tr>
+        <tr><td class="time-col">1:55</td><td class="duration-col">5分</td><td>感想発表・まとめ</td><td>−</td></tr>
+        <tr><td class="time-col">2:00</td><td class="duration-col">−</td><td>終了</td><td>−</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <!-- トラブルシュート -->
+  <section class="section" id="troubleshoot">
+    <div class="section-header">
+      <span class="section-icon">🔧</span>
+      <h2>トラブルシュート</h2>
+    </div>
+    <p style="color: #888; font-size: 14px; margin-bottom: 16px;">受講者からの質問に対する回答例</p>
+    
+    <div class="card">
+      <div class="faq-item">
+        <div class="faq-q">ゲームが時間内に終わらなかった</div>
+        <div class="faq-a">終了条件は①株価50%以下、②Red勝利条件達成、③全ターン経過。時間切れの場合はその時点で振り返りへ移行。</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">スマホでもプレイできますか？</div>
+        <div class="faq-a">可能ですが、PCの方が見やすいです。</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">画面共有時にゲームの音声が参加者に聞こえない</div>
+        <div class="faq-a">Zoom: 画面共有時に「サウンドを共有」または「コンピューターの音声を共有」にチェック。Google Meet: タブ共有時は「タブの音声も共有する」、画面全体共有時は「システム音声も共有する」を有効に。</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">ゲーム中に通信が切断された</div>
+        <div class="faq-a">まずブラウザをリロード。解消しない場合は同じ部屋コードで再接続（途中から再開可能）。</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">ゲームのURLにアクセスできない</div>
+        <div class="faq-a">ブラウザのキャッシュクリア、別ブラウザ、VPN/ファイアウォールの影響を確認。Chrome推奨。</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">ゲーム画面が動かない・フリーズした</div>
+        <div class="faq-a">ブラウザを完全に終了して再起動。または Ctrl+Shift+R（Mac: Cmd+Shift+R）でキャッシュクリア。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- フォローアップ -->
+  <section class="section" id="followup">
+    <div class="section-header">
+      <span class="section-icon">🔄</span>
+      <h2>フォローアップ研修（1ヶ月後）</h2>
+    </div>
+    
+    <div class="card">
+      <div class="overview-grid">
+        <div class="overview-item"><span class="overview-label">所要時間</span><span class="overview-value">30分</span></div>
+        <div class="overview-item"><span class="overview-label">人数</span><span class="overview-value">1名（個人実施）</span></div>
+        <div class="overview-item"><span class="overview-label">形式</span><span class="overview-value">セルフサービス</span></div>
+        <div class="overview-item"><span class="overview-label">対戦形式</span><span class="overview-value">ソロプレイ（CPU対戦）</span></div>
+      </div>
+      <div class="overview-goal">
+        <span class="overview-label">目的</span>
+        <span>研修で学んだ内容の定着確認と復習</span>
+      </div>
+    </div>
+    
+    <div class="card">
+      <div class="card-title">フォローアップ研修案内メール</div>
+      <div class="script-box" id="followup-mail">件名：【フォローアップ研修】SHELLS HACK 再プレイのご案内
+
+各位
+
+先月ご参加いただいたSHELLS HACK研修のフォローアップ研修です。
+30分程度のセルフプレイで、学びを定着させましょう。
+
+■ 実施期間
+[日付] 〜 [日付]（この期間内に各自実施）
+
+■ 所要時間
+約30分
+
+■ ゲームURL
+https://shells-hack.com/
+※「ソロプレイ」を選択し、Red TeamをCPUに設定して1戦プレイ
+
+■ 振り返りシート（プレイ後に記入）
+[フォローアップシートURL]
+
+ご不明点があればお問い合わせください。</div>
+      <button class="copy-btn" onclick="copyToClipboard(document.getElementById('followup-mail').textContent, this)">📋 メール文面をコピー</button>
+    </div>
+    
+    <div class="card">
+      <div class="card-title">⚙️ 運用のポイント</div>
+      <ul class="checklist">
+        <li>1週間程度の実施期間を設ける</li>
+        <li>期限3日前にリマインドメール送付</li>
+        <li>フォーム回答で実施確認</li>
+      </ul>
+    </div>
+  </section>
+
+</div>
+
+<div class="footer">
+  SHELLS HACK ファシリテーターガイド
+</div>
+
+<script>
+// Copy to clipboard functions
+function copyToClipboard(text, btn) {
+  navigator.clipboard.writeText(text).then(() => {
+    const originalText = btn.textContent;
+    btn.textContent = '✓ コピー完了';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = originalText;
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+}
+
+function copyRelativeUrl(filename, btn) {
+  const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+  const fullUrl = baseUrl + filename;
+  navigator.clipboard.writeText(fullUrl).then(() => {
+    const originalText = btn.textContent;
+    btn.textContent = '✓';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = originalText;
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+}
+
+// Tab switching
+function switchTab(index) {
+  document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', i === index));
+  document.querySelectorAll('.tab-content').forEach((c, i) => c.classList.toggle('active', i === index));
+}
+
+// Section highlight on scroll
+document.addEventListener('DOMContentLoaded', () => {
+  const sections = document.querySelectorAll('.section');
+  const navLinks = document.querySelectorAll('.nav a:not([target="_blank"])');
+  
+  const observerOptions = {
+    root: null,
+    rootMargin: '-100px 0px -85% 0px',
+    threshold: 0
+  };
+  
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const id = entry.target.getAttribute('id');
+        navLinks.forEach(link => {
+          link.classList.remove('active');
+          if (link.getAttribute('href') === '#' + id) {
+            link.classList.add('active');
+          }
+        });
+      }
+    });
+  }, observerOptions);
+  
+  sections.forEach(section => {
+    observer.observe(section);
+  });
+});
+</script>
+
+</body>
+</html>

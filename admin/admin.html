@@ -1,0 +1,1606 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SHELLS HACK 研修管理画面</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --primary: #00d4ff; --accent: #ffd700; --success: #00ff88; --error: #ff4444; --warning: #ffaa00;
+  --bg: #0a0e14; --bg-card: rgba(15, 25, 40, 0.95); --bg-input: rgba(0,0,0,0.3);
+  --text: #e8f4f8; --text-dim: #6b8a9e; --border: #2a3a4a;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Noto Sans JP', sans-serif; background: linear-gradient(135deg, #0d1b2a, #1b263b); color: var(--text); min-height: 100vh; }
+
+.header { background: var(--bg-card); padding: 16px 24px; border-bottom: 2px solid var(--accent); display: flex; justify-content: space-between; align-items: center; }
+.header h1 { font-size: 20px; color: var(--accent); }
+.header-btns { display: flex; gap: 10px; }
+.btn { padding: 8px 16px; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.btn-primary { background: var(--primary); color: var(--bg); }
+.btn:hover { transform: translateY(-1px); opacity: 0.9; }
+
+.container { padding: 20px; max-width: 1600px; margin: 0 auto; }
+
+.section { margin-bottom: 30px; }
+.section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid var(--border); }
+.section-title { font-size: 18px; font-weight: 700; color: var(--accent); }
+
+.filter-bar { background: rgba(0,212,255,0.05); border: 1px solid var(--primary); border-radius: 8px; padding: 16px; margin-bottom: 20px; }
+.filter-bar-title { font-size: 12px; color: var(--primary); margin-bottom: 10px; font-weight: 600; }
+.filter-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; }
+.filter-group { display: flex; flex-direction: column; gap: 4px; }
+.filter-group label { font-size: 11px; color: var(--text-dim); }
+.filter-group select, .filter-group input[type="text"] { padding: 6px 10px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 4px; color: var(--text); font-size: 12px; min-width: 140px; }
+.filter-group select option { background: #1a2a3a; }
+
+.dashboard { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+.stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
+@media (max-width: 900px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+.stat-card { background: linear-gradient(135deg, rgba(0,0,0,0.3), rgba(0,0,0,0.1)); border: 1px solid var(--border); border-radius: 8px; padding: 16px; text-align: center; }
+.stat-value { font-size: 28px; font-weight: 700; color: var(--primary); }
+.stat-label { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
+.stat-card.success .stat-value { color: var(--success); }
+.stat-card.warning .stat-value { color: var(--warning); }
+.stat-card.accent .stat-value { color: var(--accent); }
+
+.list-section { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.list-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; background: rgba(0,0,0,0.2); border-bottom: 1px solid var(--border); }
+.list-title { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.list-title.blue { color: var(--primary); }
+.list-title.gold { color: var(--accent); }
+.list-controls { display: flex; align-items: center; gap: 12px; }
+.list-count { font-size: 12px; color: var(--text-dim); }
+.btn-small { padding: 6px 12px; font-size: 11px; }
+.btn-accent { background: var(--accent); color: var(--bg); }
+.btn-danger { background: var(--error); color: #fff; }
+.btn-success { background: var(--success); color: var(--bg); }
+
+.table-wrap { max-height: 500px; overflow: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 11px; }
+th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+th { background: rgba(0,212,255,0.08); color: var(--primary); font-weight: 600; position: sticky; top: 0; z-index: 1; }
+tr:hover { background: rgba(255,255,255,0.02); }
+tr.selected { background: rgba(255,215,0,0.1); }
+.score-badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 600; }
+.score-positive { background: rgba(0,255,136,0.2); color: var(--success); }
+.score-negative { background: rgba(255,68,68,0.2); color: var(--error); }
+.score-neutral { background: rgba(255,215,0,0.2); color: var(--accent); }
+.status-executed { color: var(--success); }
+.status-partial { color: var(--warning); }
+.status-not { color: var(--error); }
+.empty-row { text-align: center; padding: 30px; color: var(--text-dim); }
+.cell-truncate { max-width: 180px; overflow: hidden; text-overflow: ellipsis; }
+
+/* チェックボックス */
+.row-checkbox { width: 16px; height: 16px; cursor: pointer; accent-color: var(--accent); }
+th .row-checkbox { margin: 0; }
+
+/* インライン編集 */
+td.editable { cursor: pointer; position: relative; }
+td.editable:hover { background: rgba(0,212,255,0.1); }
+td.editing { padding: 4px; }
+td.editing input, td.editing select, td.editing textarea {
+  width: 100%; padding: 4px 6px; background: var(--bg-input); border: 1px solid var(--primary);
+  border-radius: 4px; color: var(--text); font-size: 11px; font-family: inherit;
+}
+td.editing textarea { min-height: 60px; resize: vertical; white-space: pre-wrap; }
+td.editing select { min-width: 100px; }
+
+/* 確認モーダル */
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 1000; }
+.modal-overlay.visible { display: flex; }
+.modal { background: var(--bg-card); border: 2px solid var(--primary); border-radius: 12px; padding: 24px; min-width: 400px; max-width: 600px; }
+.modal h3 { color: var(--primary); margin-bottom: 16px; font-size: 16px; }
+.modal p { margin-bottom: 20px; font-size: 14px; line-height: 1.6; }
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+.btn-cancel { background: var(--border); color: var(--text); }
+
+/* インポートエリア */
+.import-area { margin-top: 16px; padding: 16px; background: rgba(0,0,0,0.2); border-radius: 8px; display: none; }
+.import-area.visible { display: block; }
+.import-area label { display: block; font-size: 12px; color: var(--text-dim); margin-bottom: 8px; }
+.import-area input[type="file"] { margin-bottom: 12px; }
+.import-preview { max-height: 150px; overflow: auto; font-size: 10px; background: var(--bg-input); padding: 8px; border-radius: 4px; margin-bottom: 12px; }
+/* 日時入力 */
+.filter-group input[type="datetime-local"] { padding: 5px 8px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 4px; color: var(--text); font-size: 11px; }
+.filter-group input[type="datetime-local"]::-webkit-calendar-picker-indicator { filter: invert(0.8); }
+/* セクション非表示 */
+.section.hidden { display: none; }
+.list-section.hidden { display: none; }
+
+/* AI分析パネル */
+.ai-panel { padding: 20px; }
+.ai-config { display: flex; gap: 12px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+.ai-config input[type="password"] { flex: 1; min-width: 300px; padding: 8px 12px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 12px; font-family: monospace; }
+.ai-config input[type="password"]:focus { border-color: var(--primary); outline: none; }
+.ai-data-select { display: flex; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+.ai-data-select label { display: flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; }
+.ai-data-select input[type="checkbox"] { accent-color: var(--accent); width: 16px; height: 16px; }
+.ai-data-info { font-size: 11px; color: var(--text-dim); margin-left: auto; }
+.ai-prompt-area { margin-bottom: 16px; }
+.ai-prompt-area textarea { width: 100%; min-height: 80px; padding: 12px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 13px; font-family: inherit; resize: vertical; }
+.ai-prompt-area textarea:focus { border-color: var(--primary); outline: none; }
+.ai-prompt-area textarea::placeholder { color: var(--text-dim); }
+.ai-actions { display: flex; gap: 10px; margin-bottom: 16px; }
+.ai-response { background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 8px; padding: 16px; min-height: 100px; max-height: 500px; overflow: auto; }
+.ai-response.loading { display: flex; align-items: center; justify-content: center; color: var(--text-dim); }
+.ai-response.error { border-color: var(--error); color: var(--error); }
+.ai-response-content { font-size: 13px; line-height: 1.8; white-space: pre-wrap; }
+.ai-response-content h1, .ai-response-content h2, .ai-response-content h3 { color: var(--accent); margin: 16px 0 8px; }
+.ai-response-content ul, .ai-response-content ol { padding-left: 20px; margin: 8px 0; }
+.ai-response-content code { background: var(--bg-input); padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 12px; }
+.ai-response-content pre { background: var(--bg-input); padding: 12px; border-radius: 6px; overflow-x: auto; margin: 12px 0; }
+.ai-response-content pre code { background: none; padding: 0; }
+.ai-token-info { font-size: 10px; color: var(--text-dim); margin-top: 12px; text-align: right; }
+.preset-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.preset-btn { padding: 4px 10px; background: rgba(0,212,255,0.1); border: 1px solid var(--primary); border-radius: 4px; color: var(--primary); font-size: 10px; cursor: pointer; transition: all 0.2s; }
+.preset-btn:hover { background: rgba(0,212,255,0.2); }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>📊 SHELLS HACK 研修管理画面</h1>
+  <div class="header-btns">
+    <a href="game_log_analysis_guide.html" target="_blank" class="btn btn-primary" style="text-decoration:none;">📚 ログ分析ガイド</a>
+  </div>
+</div>
+
+<div class="container">
+  <div class="filter-bar">
+    <div class="filter-bar-title" style="display: flex; justify-content: space-between; align-items: center;">
+      <span>🔍 フィルター</span>
+      <button class="btn btn-small btn-primary" onclick="loadData()">🔄 データ更新</button>
+    </div>
+    <div class="filter-row">
+      <div class="filter-group">
+        <label>研修タグ</label>
+        <input type="text" id="filterTag" placeholder="*でワイルドカード">
+      </div>
+      <div class="filter-group">
+        <label>研修種別</label>
+        <select id="filterType">
+          <option value="">全て</option>
+          <option value="feedback">初回研修</option>
+          <option value="followup">フォローアップ</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>業種</label>
+        <select id="filterIndustry"><option value="">全て</option></select>
+      </div>
+      <div class="filter-group">
+        <label>従業員規模</label>
+        <select id="filterSize"><option value="">全て</option></select>
+      </div>
+      <div class="filter-group">
+        <label>モード</label>
+        <select id="filterMode">
+          <option value="">全て</option>
+          <option value="solo">ソロ</option>
+          <option value="online">オンライン</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>勝者</label>
+        <select id="filterWinner">
+          <option value="">全て</option>
+          <option value="red">Red</option>
+          <option value="blue">Blue</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>開始日時</label>
+        <input type="datetime-local" id="filterDateFrom">
+      </div>
+      <div class="filter-group">
+        <label>終了日時</label>
+        <input type="datetime-local" id="filterDateTo">
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <span class="section-icon">📈</span>
+      <span class="section-title">ダッシュボード</span>
+    </div>
+    <div class="dashboard">
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-value" id="statFeedback">-</div><div class="stat-label">初回回答数</div></div>
+        <div class="stat-card"><div class="stat-value" id="statFollowup">-</div><div class="stat-label">フォローアップ回答数</div></div>
+        <div class="stat-card success"><div class="stat-value" id="statChange">-</div><div class="stat-label">平均変容スコア</div></div>
+        <div class="stat-card warning"><div class="stat-value" id="statAction">-</div><div class="stat-label">アクション実行率</div></div>
+        <div class="stat-card accent"><div class="stat-value" id="statUseful">-</div><div class="stat-label">平均有用性評価</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 研修フィードバック一覧 -->
+  <div class="section" id="sectionFeedbackAll">
+    <div class="section-header">
+      <span class="section-icon">📝</span>
+      <span class="section-title">研修フィードバック一覧</span>
+    </div>
+    
+    <!-- 初回研修 -->
+    <div class="list-section" id="sectionFeedback" style="margin-bottom: 20px;">
+      <div class="list-header">
+        <div class="list-title blue">🛡️ 初回研修</div>
+        <div class="list-controls">
+          <span class="list-count"><span id="countFeedback">0</span> 件</span>
+          <button class="btn btn-small btn-success" onclick="toggleImport('feedback')">📥 インポート</button>
+          <button class="btn btn-small btn-accent" onclick="exportCSV('feedback')">📊 CSV</button>
+          <button class="btn btn-small btn-danger" onclick="deleteSelected('feedback')">🗑️ 削除</button>
+        </div>
+      </div>
+      <div class="import-area" id="importAreaFeedback">
+        <label>CSVファイルを選択（エクスポートと同じ形式）</label>
+        <input type="file" accept=".csv" onchange="previewCSV(this, 'feedback')">
+        <div class="import-preview" id="previewFeedback"></div>
+        <button class="btn btn-small btn-success" onclick="executeImport('feedback')">インポート実行</button>
+        <button class="btn btn-small btn-cancel" onclick="toggleImport('feedback')">キャンセル</button>
+      </div>
+      <div class="table-wrap">
+        <table id="tableFeedback">
+          <thead>
+            <tr>
+              <th><input type="checkbox" class="row-checkbox" onchange="toggleAllCheckbox('feedback', this)"></th>
+              <th>日時</th><th>研修タグ</th><th>業種</th><th>業種その他</th><th>規模</th><th>職種</th><th>チーム</th>
+              <th>前_理解</th><th>前_優先</th><th>前_自信</th><th>後_理解</th><th>後_優先</th><th>後_自信</th>
+              <th>変容</th><th>アクション</th><th>想定被害</th><th>有用性</th><th>ゲーム評価</th><th>改善点</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyFeedback"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- フォローアップ -->
+    <div class="list-section" id="sectionFollowup">
+      <div class="list-header">
+        <div class="list-title gold">🔄 フォローアップ</div>
+        <div class="list-controls">
+          <span class="list-count"><span id="countFollowup">0</span> 件</span>
+          <button class="btn btn-small btn-success" onclick="toggleImport('followup')">📥 インポート</button>
+          <button class="btn btn-small btn-accent" onclick="exportCSV('followup')">📊 CSV</button>
+          <button class="btn btn-small btn-danger" onclick="deleteSelected('followup')">🗑️ 削除</button>
+        </div>
+      </div>
+      <div class="import-area" id="importAreaFollowup">
+        <label>CSVファイルを選択（エクスポートと同じ形式）</label>
+        <input type="file" accept=".csv" onchange="previewCSV(this, 'followup')">
+        <div class="import-preview" id="previewFollowup"></div>
+        <button class="btn btn-small btn-success" onclick="executeImport('followup')">インポート実行</button>
+        <button class="btn btn-small btn-cancel" onclick="toggleImport('followup')">キャンセル</button>
+      </div>
+      <div class="table-wrap">
+        <table id="tableFollowup">
+          <thead>
+            <tr>
+              <th><input type="checkbox" class="row-checkbox" onchange="toggleAllCheckbox('followup', this)"></th>
+              <th>日時</th><th>研修タグ</th><th>業種</th><th>業種その他</th><th>規模</th><th>職種</th>
+              <th>前回アクション</th><th>実行状況</th><th>実行内容</th><th>未実行理由</th>
+              <th>意識変化</th><th>共有</th><th>共有内容</th>
+              <th>現在_理解</th><th>現在_優先</th><th>現在_自信</th>
+              <th>上達点</th><th>気づき</th><th>優先対策</th>
+              <th>フォロー有用</th><th>全体有用</th><th>コメント</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyFollowup"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ゲームログ出力 -->
+  <div class="section" id="sectionGameLogs">
+    <div class="section-header">
+      <span class="section-icon">🎮</span>
+      <span class="section-title">ゲームログ出力（外部AI分析用）</span>
+    </div>
+    <div class="list-section">
+      <div class="list-header">
+        <div class="list-title blue">📦 game_logs エクスポート</div>
+        <div class="list-controls">
+          <span class="list-count" id="gameLogCount">- 件</span>
+          <button class="btn btn-small btn-accent" onclick="exportGameLogs()">📊 JSON出力</button>
+        </div>
+      </div>
+      <div id="gameLogPreview" style="margin: 12px 16px; padding: 12px; background: rgba(0,0,0,0.2); border-radius: 8px; font-size: 11px; color: var(--text-dim); display: none;">
+        <div id="gameLogPreviewContent"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI分析 -->
+  <div class="section" id="sectionAI">
+    <div class="section-header">
+      <span class="section-icon">🤖</span>
+      <span class="section-title">AI分析（Copilot）</span>
+    </div>
+    <div class="list-section">
+      <div class="list-header">
+        <div class="list-title blue">🧠 データ分析アシスタント</div>
+        <div class="list-controls">
+          <span class="list-count" id="aiDataCount">データ未選択</span>
+        </div>
+      </div>
+      <div class="ai-panel">
+        <div class="ai-config">
+          <input type="password" id="aiApiKey" placeholder="Anthropic API Key (sk-ant-...)" autocomplete="off">
+          <button class="btn btn-small btn-primary" onclick="saveApiKey()">💾 保存</button>
+          <button class="btn btn-small btn-cancel" onclick="clearApiKey()">🗑️ 削除</button>
+          <a href="https://console.anthropic.com/settings/keys" target="_blank" style="font-size: 11px; color: var(--primary); margin-left: 8px;">🔑 APIキー取得</a>
+        </div>
+        <div style="font-size: 10px; color: var(--text-dim); margin-bottom: 12px;">
+          ※ <a href="https://console.anthropic.com/" target="_blank" style="color: var(--primary);">Anthropic Console</a> でアカウント作成 → Settings → API Keys → Create Key でキーを発行。キーはブラウザのlocalStorageに保存されます。
+        </div>
+        
+        <div class="ai-data-select">
+          <label><input type="checkbox" id="aiIncludeFeedback" checked> 初回研修 (<span id="aiFeedbackCount">0</span>件)</label>
+          <label><input type="checkbox" id="aiIncludeFollowup" checked> フォローアップ (<span id="aiFollowupCount">0</span>件)</label>
+          <label><input type="checkbox" id="aiIncludeGameLogs"> ゲームログ (<span id="aiGameLogCount">0</span>件)</label>
+          <span class="ai-data-info">※現在のフィルター条件が適用されます</span>
+        </div>
+
+        <div class="preset-btns">
+          <button class="preset-btn" onclick="setPreset('overview')">📊 全体傾向</button>
+          <button class="preset-btn" onclick="setPreset('antipattern')">🔴 アンチパターン</button>
+          <button class="preset-btn" onclick="setPreset('effective')">🔵 効果的対策</button>
+          <button class="preset-btn" onclick="setPreset('industry')">🏢 業種別分析</button>
+          <button class="preset-btn" onclick="setPreset('retention')">📈 定着率分析</button>
+          <button class="preset-btn" onclick="setPreset('action')">✅ アクション実行分析</button>
+        </div>
+
+        <div class="ai-prompt-area">
+          <textarea id="aiPrompt" placeholder="分析したい内容を入力してください...&#10;例: Red勝利時のBlue側の共通パターンは？&#10;例: 業種別の変容スコアの違いを分析して&#10;例: フォローアップでアクション未実行の理由を分類して"></textarea>
+        </div>
+
+        <div class="ai-actions">
+          <button class="btn btn-accent" onclick="runAIAnalysis()">🚀 分析実行</button>
+          <button class="btn btn-cancel" onclick="clearAIResponse()">🧹 クリア</button>
+          <span style="margin-left: auto; display: flex; gap: 8px;">
+            <button class="btn btn-small btn-primary" onclick="exportAnalysisMd()" title="Markdown形式でダウンロード">📄 MD出力</button>
+            <button class="btn btn-small btn-primary" onclick="exportAnalysisPdf()" title="PDF形式で出力">📑 PDF出力</button>
+          </span>
+        </div>
+
+        <div class="ai-response" id="aiResponse">
+          <div class="ai-response-content" id="aiResponseContent">分析結果がここに表示されます</div>
+        </div>
+        <div class="ai-token-info" id="aiTokenInfo"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 確認モーダル -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal">
+    <h3>⚠️ 削除確認</h3>
+    <p id="confirmMessage"></p>
+    <div class="modal-actions">
+      <button class="btn btn-cancel" onclick="closeConfirmModal()">キャンセル</button>
+      <button class="btn btn-danger" onclick="executeDelete()">削除する</button>
+    </div>
+  </div>
+</div>
+
+<script src="../firebase-config.js"></script>
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
+import { getDatabase, ref, get, update, remove, push, set } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js';
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+let allFeedback = [];
+let allFollowup = [];
+let pendingDelete = { type: null, ids: [] };
+let pendingImport = { feedback: [], followup: [] };
+let currentEditCell = null;
+let isComposing = false;
+
+// ワイルドカードマッチング関数（*を任意文字列にマッチ）
+function wildcardMatch(pattern, str) {
+  if (!pattern) return true;
+  if (pattern === '*') return true; // *は全件マッチ（trainingTag未設定も含む）
+  if (!str) return false;
+  const regexPattern = pattern.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*');
+  return new RegExp(`^${regexPattern}$`, 'i').test(str);
+}
+
+// フィールド定義
+const FEEDBACK_FIELDS = [
+  { key: 'trainingTag', label: '研修タグ', type: 'text' },
+  { key: 'q1_industry', label: '業種', type: 'select', options: ['金融（銀行・証券・保険）','製造','情報通信・IT','小売・流通','医療・ヘルスケア','官公庁・自治体','エネルギー・インフラ','建設・不動産','教育・研究機関','その他'] },
+  { key: 'q2_industry_other', label: '業種その他', type: 'text' },
+  { key: 'q3_employee_size', label: '規模', type: 'select', options: ['〜100名','101〜500名','501〜1,000名','1,001〜5,000名','5,001名以上'] },
+  { key: 'q4_job_role', label: '職種', type: 'select', options: ['情報システム / IT部門','セキュリティ専門職','経営・管理職','事業部門（営業・企画等）','ペネトレーションテスター / セキュリティコンサル','その他'] },
+  { key: 'q5_team_played', label: 'チーム', type: 'select', options: ['Blue Team（防御側）のみ','Red Team（攻撃側）のみ','両方プレイした'] },
+  { key: 'q6_pre_killchain', label: '前_理解', type: 'number' },
+  { key: 'q7_pre_priority', label: '前_優先', type: 'number' },
+  { key: 'q8_pre_confidence', label: '前_自信', type: 'number' },
+  { key: 'q9_post_killchain', label: '後_理解', type: 'number' },
+  { key: 'q10_post_priority', label: '後_優先', type: 'number' },
+  { key: 'q11_post_confidence', label: '後_自信', type: 'number' },
+  { key: 'q15_action', label: 'アクション', type: 'textarea' },
+  { key: 'q16_impact', label: '想定被害', type: 'textarea' },
+  { key: 'q17_useful', label: '有用性', type: 'number' },
+  { key: 'q18_game_format', label: 'ゲーム評価', type: 'number' },
+  { key: 'q19_feedback', label: '改善点', type: 'textarea' }
+];
+
+const FOLLOWUP_FIELDS = [
+  { key: 'trainingTag', label: '研修タグ', type: 'text' },
+  { key: 'q1_industry', label: '業種', type: 'select', options: ['金融（銀行・証券・保険）','製造','情報通信・IT','小売・流通','医療・ヘルスケア','官公庁・自治体','エネルギー・インフラ','建設・不動産','教育・研究機関','その他'] },
+  { key: 'q2_industry_other', label: '業種その他', type: 'text' },
+  { key: 'q3_employee_size', label: '規模', type: 'select', options: ['〜100名','101〜500名','501〜1,000名','1,001〜5,000名','5,001名以上'] },
+  { key: 'q4_job_role', label: '職種', type: 'select', options: ['情報システム / IT部門','セキュリティ専門職','経営・管理職','事業部門（営業・企画等）','ペネトレーションテスター / セキュリティコンサル','その他'] },
+  { key: 'q5_action_recall', label: '前回アクション', type: 'textarea' },
+  { key: 'q6_executed', label: '実行状況', type: 'select', options: ['実行した','一部実行した','実行していない'] },
+  { key: 'q7_executed_detail', label: '実行内容', type: 'textarea' },
+  { key: 'q8_not_executed_reason', label: '未実行理由', type: 'textarea' },
+  { key: 'q9_awareness_change', label: '意識変化', type: 'textarea' },
+  { key: 'q10_shared', label: '共有', type: 'select', options: ['共有した','共有していない'] },
+  { key: 'q11_shared_content', label: '共有内容', type: 'textarea' },
+  { key: 'q12_current_killchain', label: '現在_理解', type: 'number' },
+  { key: 'q13_current_priority', label: '現在_優先', type: 'number' },
+  { key: 'q14_current_confidence', label: '現在_自信', type: 'number' },
+  { key: 'q15_improved', label: '上達点', type: 'textarea' },
+  { key: 'q16_new_insight', label: '気づき', type: 'textarea' },
+  { key: 'q17_priority_measures', label: '優先対策', type: 'textarea' },
+  { key: 'q18_followup_useful', label: 'フォロー有用', type: 'number' },
+  { key: 'q19_overall_useful', label: '全体有用', type: 'number' },
+  { key: 'q20_comment', label: 'コメント', type: 'textarea' }
+];
+
+async function loadData() {
+  document.getElementById('tbodyFeedback').innerHTML = '<tr><td colspan="20" class="empty-row">読み込み中...</td></tr>';
+  document.getElementById('tbodyFollowup').innerHTML = '<tr><td colspan="23" class="empty-row">読み込み中...</td></tr>';
+  
+  // game_logs表示も更新中に
+  const preview = document.getElementById('gameLogPreview');
+  const content = document.getElementById('gameLogPreviewContent');
+  preview.style.display = 'block';
+  content.innerHTML = '読み込み中...';
+  
+  try {
+    const [fbSnap, fuSnap, glSnap] = await Promise.all([
+      get(ref(db, 'training_feedback/responses')),
+      get(ref(db, 'training_feedback/followup_responses')),
+      get(ref(db, 'game_logs'))
+    ]);
+    
+    allFeedback = [];
+    allFollowup = [];
+    allGameLogs = [];
+    const tags = new Set();
+    const industries = new Set();
+    const sizes = new Set();
+    
+    if (fbSnap.exists()) {
+      fbSnap.forEach(child => {
+        const d = { id: child.key, ...child.val() };
+        allFeedback.push(d);
+        if (d.trainingTag) tags.add(d.trainingTag);
+        if (d.q1_industry) industries.add(d.q1_industry);
+        if (d.q3_employee_size) sizes.add(d.q3_employee_size);
+      });
+    }
+    
+    if (fuSnap.exists()) {
+      fuSnap.forEach(child => {
+        const d = { id: child.key, ...child.val() };
+        allFollowup.push(d);
+        if (d.trainingTag) tags.add(d.trainingTag);
+        if (d.q1_industry) industries.add(d.q1_industry);
+        if (d.q3_employee_size) sizes.add(d.q3_employee_size);
+      });
+    }
+    
+    if (glSnap.exists()) {
+      glSnap.forEach(child => {
+        allGameLogs.push({ sessionId: child.key, ...child.val() });
+      });
+    }
+    
+    updateSelect('filterIndustry', [...industries].sort());
+    updateSelect('filterSize', [...sizes]);
+    
+    applyAll();
+    
+    // game_logs件数・統計表示
+    const filters = getGameLogFilters();
+    const filtered = filterGameLogs(allGameLogs, filters);
+    
+    document.getElementById('gameLogCount').textContent = `${filtered.length} 件`;
+    
+    const redWins = filtered.filter(l => l.result?.winner === 'red').length;
+    const blueWins = filtered.filter(l => l.result?.winner === 'blue').length;
+    const soloCount = filtered.filter(l => l.meta?.mode === 'solo').length;
+    const onlineCount = filtered.filter(l => l.meta?.mode === 'online').length;
+    const avgStock = filtered.length ? (filtered.reduce((sum, l) => sum + (l.result?.finalStockPrice || 0), 0) / filtered.length).toFixed(1) : '-';
+    
+    content.innerHTML = `
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;">
+        <div>📊 総数: <strong style="color: var(--primary);">${filtered.length}</strong> 件</div>
+        <div>🔴 Red勝利: <strong style="color: var(--error);">${redWins}</strong> (${filtered.length ? Math.round(redWins/filtered.length*100) : 0}%)</div>
+        <div>🔵 Blue勝利: <strong style="color: var(--primary);">${blueWins}</strong> (${filtered.length ? Math.round(blueWins/filtered.length*100) : 0}%)</div>
+        <div>🎮 ソロ: <strong>${soloCount}</strong></div>
+        <div>👥 オンライン: <strong>${onlineCount}</strong></div>
+        <div>📈 平均最終株価: <strong style="color: var(--accent);">${avgStock}</strong></div>
+      </div>
+    `;
+    
+    updateAIDataCounts();
+  } catch (e) {
+    console.error(e);
+    document.getElementById('tbodyFeedback').innerHTML = '<tr><td colspan="20" class="empty-row">データ取得エラー</td></tr>';
+    document.getElementById('tbodyFollowup').innerHTML = '<tr><td colspan="23" class="empty-row">データ取得エラー</td></tr>';
+    content.innerHTML = '<span style="color: var(--error);">データ取得エラー</span>';
+  }
+}
+
+function updateSelect(id, options) {
+  const select = document.getElementById(id);
+  const current = select.value;
+  select.innerHTML = '<option value="">全て</option>' + options.map(o => `<option value="${o}">${o}</option>`).join('');
+  select.value = current;
+}
+
+function getFilteredData() {
+  const tag = document.getElementById('filterTag').value;
+  const industry = document.getElementById('filterIndustry').value;
+  const size = document.getElementById('filterSize').value;
+  const dateFrom = document.getElementById('filterDateFrom').value;
+  const dateTo = document.getElementById('filterDateTo').value;
+  const type = document.getElementById('filterType').value;
+  
+  const dateFromTs = dateFrom ? new Date(dateFrom).getTime() : null;
+  const dateToTs = dateTo ? new Date(dateTo).getTime() : null;
+  
+  const filterBase = d => {
+    if (tag && !wildcardMatch(tag, d.trainingTag)) return false;
+    if (industry && d.q1_industry !== industry) return false;
+    if (size && d.q3_employee_size !== size) return false;
+    if (dateFromTs && (!d.submittedAt || d.submittedAt < dateFromTs)) return false;
+    if (dateToTs && (!d.submittedAt || d.submittedAt > dateToTs)) return false;
+    return true;
+  };
+  
+  return {
+    feedbackFiltered: (type === '' || type === 'feedback') ? allFeedback.filter(filterBase) : [],
+    followupFiltered: (type === '' || type === 'followup') ? allFollowup.filter(filterBase) : [],
+    showFeedback: type === '' || type === 'feedback',
+    showFollowup: type === '' || type === 'followup'
+  };
+}
+
+function applyAll() {
+  const { feedbackFiltered, followupFiltered, showFeedback, showFollowup } = getFilteredData();
+  
+  // セクション表示切替
+  document.getElementById('sectionFeedback').classList.toggle('hidden', !showFeedback);
+  document.getElementById('sectionFollowup').classList.toggle('hidden', !showFollowup);
+  
+  document.getElementById('statFeedback').textContent = feedbackFiltered.length;
+  document.getElementById('statFollowup').textContent = followupFiltered.length;
+  
+  const changes = feedbackFiltered.map(d => ((d.score_killchain_change||0) + (d.score_priority_change||0) + (d.score_confidence_change||0)) / 3);
+  const avgChange = changes.length ? (changes.reduce((a,b)=>a+b,0) / changes.length).toFixed(2) : '-';
+  document.getElementById('statChange').textContent = avgChange > 0 ? '+' + avgChange : avgChange;
+  
+  const executed = followupFiltered.filter(d => d.q6_executed === '実行した' || d.q6_executed === '一部実行した').length;
+  document.getElementById('statAction').textContent = followupFiltered.length ? Math.round(executed / followupFiltered.length * 100) + '%' : '-';
+  
+  const useful = feedbackFiltered.map(d => d.q17_useful).filter(v => v > 0);
+  document.getElementById('statUseful').textContent = useful.length ? (useful.reduce((a,b)=>a+b,0) / useful.length).toFixed(1) + '/5' : '-';
+  
+  renderFeedbackTable(feedbackFiltered);
+  renderFollowupTable(followupFiltered);
+}
+
+function formatDate(ts) {
+  if (!ts) return '-';
+  const d = new Date(ts);
+  return `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+
+function scoreBadge(val) {
+  if (val > 0) return `<span class="score-badge score-positive">+${val.toFixed(1)}</span>`;
+  if (val < 0) return `<span class="score-badge score-negative">${val.toFixed(1)}</span>`;
+  return `<span class="score-badge score-neutral">±0</span>`;
+}
+
+function escapeHtml(str) {
+  if (str == null) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function renderFeedbackTable(data) {
+  document.getElementById('countFeedback').textContent = data.length;
+  const tbody = document.getElementById('tbodyFeedback');
+  if (data.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="20" class="empty-row">データがありません</td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.sort((a,b) => (b.submittedAt||0) - (a.submittedAt||0)).map(d => {
+    const change = ((d.score_killchain_change||0) + (d.score_priority_change||0) + (d.score_confidence_change||0)) / 3;
+    return `<tr data-id="${d.id}" data-type="feedback">
+      <td><input type="checkbox" class="row-checkbox" data-id="${d.id}"></td>
+      <td>${formatDate(d.submittedAt)}</td>
+      <td class="editable" data-field="trainingTag">${escapeHtml(d.trainingTag)||'-'}</td>
+      <td class="editable" data-field="q1_industry">${escapeHtml(d.q1_industry)||'-'}</td>
+      <td class="editable" data-field="q2_industry_other">${escapeHtml(d.q2_industry_other)||'-'}</td>
+      <td class="editable" data-field="q3_employee_size">${escapeHtml(d.q3_employee_size)||'-'}</td>
+      <td class="editable" data-field="q4_job_role">${escapeHtml(d.q4_job_role)||'-'}</td>
+      <td class="editable" data-field="q5_team_played">${escapeHtml(d.q5_team_played)||'-'}</td>
+      <td class="editable" data-field="q6_pre_killchain">${d.q6_pre_killchain||'-'}</td>
+      <td class="editable" data-field="q7_pre_priority">${d.q7_pre_priority||'-'}</td>
+      <td class="editable" data-field="q8_pre_confidence">${d.q8_pre_confidence||'-'}</td>
+      <td class="editable" data-field="q9_post_killchain">${d.q9_post_killchain||'-'}</td>
+      <td class="editable" data-field="q10_post_priority">${d.q10_post_priority||'-'}</td>
+      <td class="editable" data-field="q11_post_confidence">${d.q11_post_confidence||'-'}</td>
+      <td>${scoreBadge(change)}</td>
+      <td class="editable cell-truncate" data-field="q15_action" title="${escapeHtml(d.q15_action)}">${escapeHtml(d.q15_action)||'-'}</td>
+      <td class="editable cell-truncate" data-field="q16_impact" title="${escapeHtml(d.q16_impact)}">${escapeHtml(d.q16_impact)||'-'}</td>
+      <td class="editable" data-field="q17_useful">${d.q17_useful||'-'}</td>
+      <td class="editable" data-field="q18_game_format">${d.q18_game_format||'-'}</td>
+      <td class="editable cell-truncate" data-field="q19_feedback" title="${escapeHtml(d.q19_feedback)}">${escapeHtml(d.q19_feedback)||'-'}</td>
+    </tr>`;
+  }).join('');
+  attachEditListeners('feedback');
+}
+
+function renderFollowupTable(data) {
+  document.getElementById('countFollowup').textContent = data.length;
+  const tbody = document.getElementById('tbodyFollowup');
+  if (data.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="23" class="empty-row">データがありません</td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.sort((a,b) => (b.submittedAt||0) - (a.submittedAt||0)).map(d => {
+    const statusClass = d.q6_executed === '実行した' ? 'status-executed' : d.q6_executed === '一部実行した' ? 'status-partial' : 'status-not';
+    return `<tr data-id="${d.id}" data-type="followup">
+      <td><input type="checkbox" class="row-checkbox" data-id="${d.id}"></td>
+      <td>${formatDate(d.submittedAt)}</td>
+      <td class="editable" data-field="trainingTag">${escapeHtml(d.trainingTag)||'-'}</td>
+      <td class="editable" data-field="q1_industry">${escapeHtml(d.q1_industry)||'-'}</td>
+      <td class="editable" data-field="q2_industry_other">${escapeHtml(d.q2_industry_other)||'-'}</td>
+      <td class="editable" data-field="q3_employee_size">${escapeHtml(d.q3_employee_size)||'-'}</td>
+      <td class="editable" data-field="q4_job_role">${escapeHtml(d.q4_job_role)||'-'}</td>
+      <td class="editable cell-truncate" data-field="q5_action_recall" title="${escapeHtml(d.q5_action_recall)}">${escapeHtml(d.q5_action_recall)||'-'}</td>
+      <td class="editable ${statusClass}" data-field="q6_executed">${escapeHtml(d.q6_executed)||'-'}</td>
+      <td class="editable cell-truncate" data-field="q7_executed_detail" title="${escapeHtml(d.q7_executed_detail)}">${escapeHtml(d.q7_executed_detail)||'-'}</td>
+      <td class="editable cell-truncate" data-field="q8_not_executed_reason" title="${escapeHtml(d.q8_not_executed_reason)}">${escapeHtml(d.q8_not_executed_reason)||'-'}</td>
+      <td class="editable cell-truncate" data-field="q9_awareness_change" title="${escapeHtml(d.q9_awareness_change)}">${escapeHtml(d.q9_awareness_change)||'-'}</td>
+      <td class="editable" data-field="q10_shared">${escapeHtml(d.q10_shared)||'-'}</td>
+      <td class="editable cell-truncate" data-field="q11_shared_content" title="${escapeHtml(d.q11_shared_content)}">${escapeHtml(d.q11_shared_content)||'-'}</td>
+      <td class="editable" data-field="q12_current_killchain">${d.q12_current_killchain||'-'}</td>
+      <td class="editable" data-field="q13_current_priority">${d.q13_current_priority||'-'}</td>
+      <td class="editable" data-field="q14_current_confidence">${d.q14_current_confidence||'-'}</td>
+      <td class="editable cell-truncate" data-field="q15_improved" title="${escapeHtml(d.q15_improved)}">${escapeHtml(d.q15_improved)||'-'}</td>
+      <td class="editable cell-truncate" data-field="q16_new_insight" title="${escapeHtml(d.q16_new_insight)}">${escapeHtml(d.q16_new_insight)||'-'}</td>
+      <td class="editable cell-truncate" data-field="q17_priority_measures" title="${escapeHtml(d.q17_priority_measures)}">${escapeHtml(d.q17_priority_measures)||'-'}</td>
+      <td class="editable" data-field="q18_followup_useful">${d.q18_followup_useful||'-'}</td>
+      <td class="editable" data-field="q19_overall_useful">${d.q19_overall_useful||'-'}</td>
+      <td class="editable cell-truncate" data-field="q20_comment" title="${escapeHtml(d.q20_comment)}">${escapeHtml(d.q20_comment)||'-'}</td>
+    </tr>`;
+  }).join('');
+  attachEditListeners('followup');
+}
+
+function attachEditListeners(type) {
+  const tbody = document.getElementById('tbody' + (type === 'feedback' ? 'Feedback' : 'Followup'));
+  tbody.querySelectorAll('td.editable').forEach(td => {
+    td.addEventListener('click', () => startEdit(td, type));
+  });
+}
+
+function startEdit(td, type) {
+  if (td.classList.contains('editing')) return;
+  if (currentEditCell) finishEdit(currentEditCell, true);
+  
+  const row = td.closest('tr');
+  const id = row.dataset.id;
+  const field = td.dataset.field;
+  const fields = type === 'feedback' ? FEEDBACK_FIELDS : FOLLOWUP_FIELDS;
+  const fieldDef = fields.find(f => f.key === field);
+  if (!fieldDef) return;
+  
+  const data = type === 'feedback' ? allFeedback.find(d => d.id === id) : allFollowup.find(d => d.id === id);
+  const currentVal = data ? (data[field] ?? '') : '';
+  
+  td.classList.add('editing');
+  td.dataset.originalValue = currentVal;
+  td.dataset.recordId = id;
+  td.dataset.recordType = type;
+  currentEditCell = td;
+  
+  let input;
+  if (fieldDef.type === 'select') {
+    input = document.createElement('select');
+    input.innerHTML = '<option value="">-</option>' + fieldDef.options.map(o => 
+      `<option value="${o}"${o === currentVal ? ' selected' : ''}>${o}</option>`
+    ).join('');
+  } else if (fieldDef.type === 'textarea') {
+    input = document.createElement('textarea');
+    input.value = currentVal;
+  } else {
+    input = document.createElement('input');
+    input.type = fieldDef.type === 'number' ? 'number' : 'text';
+    input.value = currentVal;
+    if (fieldDef.type === 'number') { input.min = 1; input.max = 5; }
+  }
+  
+  td.textContent = '';
+  td.appendChild(input);
+  input.focus();
+  if (input.select) input.select();
+  
+  input.addEventListener('compositionstart', () => { isComposing = true; });
+  input.addEventListener('compositionend', () => { isComposing = false; });
+  
+  input.addEventListener('keydown', e => {
+    if (isComposing) return;
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      finishEdit(td, true);
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      finishEdit(td, false);
+    }
+  });
+  
+  input.addEventListener('blur', e => {
+    setTimeout(() => {
+      if (td.classList.contains('editing')) {
+        finishEdit(td, true);
+      }
+    }, 100);
+  });
+}
+
+async function finishEdit(td, save) {
+  if (!td.classList.contains('editing')) return;
+  
+  const input = td.querySelector('input, select, textarea');
+  const newVal = input ? input.value : '';
+  const originalVal = td.dataset.originalValue;
+  const id = td.dataset.recordId;
+  const type = td.dataset.recordType;
+  const field = td.dataset.field;
+  
+  td.classList.remove('editing');
+  currentEditCell = null;
+  
+  if (save && newVal !== originalVal) {
+    const path = type === 'feedback' 
+      ? `training_feedback/responses/${id}/${field}`
+      : `training_feedback/followup_responses/${id}/${field}`;
+    
+    try {
+      const fieldDef = (type === 'feedback' ? FEEDBACK_FIELDS : FOLLOWUP_FIELDS).find(f => f.key === field);
+      let saveVal = newVal;
+      if (fieldDef?.type === 'number') saveVal = newVal ? parseInt(newVal) : null;
+      
+      await update(ref(db), { [path]: saveVal });
+      
+      const dataArr = type === 'feedback' ? allFeedback : allFollowup;
+      const record = dataArr.find(d => d.id === id);
+      if (record) {
+        record[field] = saveVal;
+        if (type === 'feedback' && ['q6_pre_killchain','q7_pre_priority','q8_pre_confidence','q9_post_killchain','q10_post_priority','q11_post_confidence'].includes(field)) {
+          record.score_killchain_change = (record.q9_post_killchain||0) - (record.q6_pre_killchain||0);
+          record.score_priority_change = (record.q10_post_priority||0) - (record.q7_pre_priority||0);
+          record.score_confidence_change = (record.q11_post_confidence||0) - (record.q8_pre_confidence||0);
+          await update(ref(db), {
+            [`training_feedback/responses/${id}/score_killchain_change`]: record.score_killchain_change,
+            [`training_feedback/responses/${id}/score_priority_change`]: record.score_priority_change,
+            [`training_feedback/responses/${id}/score_confidence_change`]: record.score_confidence_change
+          });
+        }
+      }
+      td.textContent = newVal || '-';
+      if (td.title !== undefined) td.title = newVal || '';
+    } catch (e) {
+      console.error(e);
+      alert('保存に失敗しました');
+      td.textContent = originalVal || '-';
+    }
+  } else {
+    td.textContent = originalVal || '-';
+    if (td.title !== undefined) td.title = originalVal || '';
+  }
+}
+
+// チェックボックス
+window.toggleAllCheckbox = function(type, masterCb) {
+  const tbody = document.getElementById('tbody' + (type === 'feedback' ? 'Feedback' : 'Followup'));
+  tbody.querySelectorAll('.row-checkbox').forEach(cb => {
+    cb.checked = masterCb.checked;
+    cb.closest('tr').classList.toggle('selected', masterCb.checked);
+  });
+};
+
+document.addEventListener('change', e => {
+  if (e.target.classList.contains('row-checkbox') && e.target.closest('tbody')) {
+    e.target.closest('tr').classList.toggle('selected', e.target.checked);
+  }
+});
+
+// 削除
+window.deleteSelected = function(type) {
+  const tbody = document.getElementById('tbody' + (type === 'feedback' ? 'Feedback' : 'Followup'));
+  const checked = tbody.querySelectorAll('.row-checkbox:checked');
+  if (checked.length === 0) {
+    alert('削除する行を選択してください');
+    return;
+  }
+  pendingDelete.type = type;
+  pendingDelete.ids = Array.from(checked).map(cb => cb.dataset.id);
+  document.getElementById('confirmMessage').textContent = `${checked.length}件のレコードを削除します。この操作は取り消せません。`;
+  document.getElementById('confirmModal').classList.add('visible');
+};
+
+window.closeConfirmModal = function() {
+  document.getElementById('confirmModal').classList.remove('visible');
+  pendingDelete = { type: null, ids: [] };
+};
+
+window.executeDelete = async function() {
+  const { type, ids } = pendingDelete;
+  if (!type || ids.length === 0) return;
+  
+  const basePath = type === 'feedback' ? 'training_feedback/responses' : 'training_feedback/followup_responses';
+  
+  try {
+    for (const id of ids) {
+      await remove(ref(db, `${basePath}/${id}`));
+    }
+    closeConfirmModal();
+    loadData();
+  } catch (e) {
+    console.error(e);
+    alert('削除に失敗しました');
+  }
+};
+
+// インポート
+window.toggleImport = function(type) {
+  const area = document.getElementById('importArea' + (type === 'feedback' ? 'Feedback' : 'Followup'));
+  area.classList.toggle('visible');
+  if (!area.classList.contains('visible')) {
+    area.querySelector('input[type="file"]').value = '';
+    document.getElementById('preview' + (type === 'feedback' ? 'Feedback' : 'Followup')).textContent = '';
+    pendingImport[type] = [];
+  }
+};
+
+window.previewCSV = function(input, type) {
+  const file = input.files[0];
+  if (!file) return;
+  
+  const reader = new FileReader();
+  reader.onload = e => {
+    const rows = parseCSV(e.target.result);
+    if (rows.length < 2) {
+      document.getElementById('preview' + (type === 'feedback' ? 'Feedback' : 'Followup')).textContent = 'データがありません';
+      return;
+    }
+    pendingImport[type] = rows;
+    document.getElementById('preview' + (type === 'feedback' ? 'Feedback' : 'Followup')).textContent = 
+      `${rows.length - 1}件のデータ\nヘッダー: ${rows[0].slice(0, 5).join(', ')}...`;
+  };
+  reader.readAsText(file);
+};
+
+function parseCSV(text) {
+  const lines = [];
+  let current = [];
+  let field = '';
+  let inQuote = false;
+  
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQuote) {
+      if (c === '"') {
+        if (text[i+1] === '"') { field += '"'; i++; }
+        else { inQuote = false; }
+      } else { field += c; }
+    } else {
+      if (c === '"') { inQuote = true; }
+      else if (c === ',') { current.push(field); field = ''; }
+      else if (c === '\n' || (c === '\r' && text[i+1] === '\n')) {
+        current.push(field); field = '';
+        if (current.length > 1 || current[0] !== '') lines.push(current);
+        current = [];
+        if (c === '\r') i++;
+      } else if (c !== '\r') { field += c; }
+    }
+  }
+  if (field || current.length > 0) { current.push(field); lines.push(current); }
+  return lines;
+}
+
+window.executeImport = async function(type) {
+  const rows = pendingImport[type];
+  if (!rows || rows.length < 2) {
+    alert('インポートするデータがありません');
+    return;
+  }
+  
+  const headers = rows[0];
+  const basePath = type === 'feedback' ? 'training_feedback/responses' : 'training_feedback/followup_responses';
+  const headerMap = type === 'feedback' ? {
+    '研修タグ': 'trainingTag', '業種': 'q1_industry', '業種その他': 'q2_industry_other', '規模': 'q3_employee_size',
+    '職種': 'q4_job_role', 'チーム': 'q5_team_played', '前_理解': 'q6_pre_killchain', '前_優先': 'q7_pre_priority',
+    '前_自信': 'q8_pre_confidence', '後_理解': 'q9_post_killchain', '後_優先': 'q10_post_priority', '後_自信': 'q11_post_confidence',
+    'アクション': 'q15_action', '想定被害': 'q16_impact', '有用性': 'q17_useful', 'ゲーム評価': 'q18_game_format', '改善点': 'q19_feedback'
+  } : {
+    '研修タグ': 'trainingTag', '業種': 'q1_industry', '業種その他': 'q2_industry_other', '規模': 'q3_employee_size',
+    '職種': 'q4_job_role', '前回アクション': 'q5_action_recall', '実行状況': 'q6_executed', '実行内容': 'q7_executed_detail',
+    '未実行理由': 'q8_not_executed_reason', '意識変化': 'q9_awareness_change', '共有': 'q10_shared', '共有内容': 'q11_shared_content',
+    '現在_理解': 'q12_current_killchain', '現在_優先': 'q13_current_priority', '現在_自信': 'q14_current_confidence',
+    '上達点': 'q15_improved', '気づき': 'q16_new_insight', '優先対策': 'q17_priority_measures',
+    'フォロー有用': 'q18_followup_useful', '全体有用': 'q19_overall_useful', 'コメント': 'q20_comment'
+  };
+  
+  const numericFields = type === 'feedback' 
+    ? ['q6_pre_killchain','q7_pre_priority','q8_pre_confidence','q9_post_killchain','q10_post_priority','q11_post_confidence','q17_useful','q18_game_format']
+    : ['q12_current_killchain','q13_current_priority','q14_current_confidence','q18_followup_useful','q19_overall_useful'];
+  
+  let imported = 0;
+  try {
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i];
+      const record = { submittedAt: Date.now() };
+      
+      headers.forEach((h, idx) => {
+        const key = headerMap[h];
+        if (key && row[idx] !== undefined) {
+          let val = row[idx];
+          if (numericFields.includes(key)) val = val ? parseInt(val) : null;
+          record[key] = val;
+        }
+      });
+      
+      if (type === 'feedback') {
+        record.score_killchain_change = (record.q9_post_killchain||0) - (record.q6_pre_killchain||0);
+        record.score_priority_change = (record.q10_post_priority||0) - (record.q7_pre_priority||0);
+        record.score_confidence_change = (record.q11_post_confidence||0) - (record.q8_pre_confidence||0);
+      }
+      
+      // hostnameを付与（監査・Firebase Rules用）
+      record.hostname = location.hostname || 'admin-import';
+      
+      const newRef = push(ref(db, basePath));
+      await set(newRef, record);
+      imported++;
+    }
+    alert(`${imported}件インポートしました`);
+    toggleImport(type);
+    loadData();
+  } catch (e) {
+    console.error(e);
+    alert(`インポート中にエラー: ${imported}件まで完了`);
+  }
+};
+
+// CSV出力
+window.exportCSV = function(type) {
+  const { feedbackFiltered, followupFiltered } = getFilteredData();
+  const data = type === 'feedback' ? feedbackFiltered : followupFiltered;
+  
+  if (data.length === 0) { alert('エクスポートするデータがありません'); return; }
+  
+  const headers = type === 'feedback' 
+    ? ['日時','研修タグ','業種','業種その他','規模','職種','チーム','前_理解','前_優先','前_自信','後_理解','後_優先','後_自信','変容_理解','変容_優先','変容_自信','アクション','想定被害','有用性','ゲーム評価','改善点']
+    : ['日時','研修タグ','業種','業種その他','規模','職種','前回アクション','実行状況','実行内容','未実行理由','意識変化','共有','共有内容','現在_理解','現在_優先','現在_自信','上達点','気づき','優先対策','フォロー有用','全体有用','コメント'];
+  
+  const rows = data.map(d => {
+    if (type === 'feedback') {
+      return [formatDate(d.submittedAt), d.trainingTag, d.q1_industry, d.q2_industry_other, d.q3_employee_size, d.q4_job_role, d.q5_team_played,
+        d.q6_pre_killchain, d.q7_pre_priority, d.q8_pre_confidence, d.q9_post_killchain, d.q10_post_priority, d.q11_post_confidence,
+        d.score_killchain_change, d.score_priority_change, d.score_confidence_change, d.q15_action, d.q16_impact, d.q17_useful, d.q18_game_format, d.q19_feedback];
+    } else {
+      return [formatDate(d.submittedAt), d.trainingTag, d.q1_industry, d.q2_industry_other, d.q3_employee_size, d.q4_job_role,
+        d.q5_action_recall, d.q6_executed, d.q7_executed_detail, d.q8_not_executed_reason, d.q9_awareness_change, d.q10_shared, d.q11_shared_content,
+        d.q12_current_killchain, d.q13_current_priority, d.q14_current_confidence, d.q15_improved, d.q16_new_insight, d.q17_priority_measures,
+        d.q18_followup_useful, d.q19_overall_useful, d.q20_comment];
+    }
+  });
+  
+  let csv = '\uFEFF' + headers.join(',') + '\n';
+  rows.forEach(row => {
+    csv += row.map(v => {
+      if (v == null) return '';
+      const s = String(v);
+      return s.includes(',') || s.includes('\n') || s.includes('"') ? '"' + s.replace(/"/g, '""') + '"' : s;
+    }).join(',') + '\n';
+  });
+  
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `shells_hack_${type}_${new Date().toISOString().slice(0,10)}.csv`;
+  link.click();
+};
+
+document.getElementById('filterType').addEventListener('change', applyAll);
+document.getElementById('filterTag').addEventListener('input', applyAll);
+document.getElementById('filterIndustry').addEventListener('change', applyAll);
+document.getElementById('filterSize').addEventListener('change', applyAll);
+document.getElementById('filterDateFrom').addEventListener('change', applyAll);
+document.getElementById('filterDateTo').addEventListener('change', applyAll);
+
+// ===== Game Logs Functions =====
+let allGameLogs = [];
+
+async function loadGameLogTags() {
+  try {
+    const snap = await get(ref(db, 'game_logs'));
+    const tags = new Set();
+    if (snap.exists()) {
+      snap.forEach(child => {
+        const meta = child.val()?.meta;
+        if (meta?.trainingTag) tags.add(meta.trainingTag);
+      });
+    }
+    // タグ一覧は収集のみ（テキスト入力のためselect更新不要）
+  } catch (e) {
+    console.error('Failed to load game log tags:', e);
+  }
+}
+
+function getGameLogFilters() {
+  return {
+    tag: document.getElementById('filterTag').value,
+    mode: document.getElementById('filterMode').value,
+    winner: document.getElementById('filterWinner').value,
+    dateFrom: document.getElementById('filterDateFrom').value,
+    dateTo: document.getElementById('filterDateTo').value
+  };
+}
+
+function filterGameLogs(logs, filters) {
+  const dateFromTs = filters.dateFrom ? new Date(filters.dateFrom).getTime() : null;
+  const dateToTs = filters.dateTo ? new Date(filters.dateTo).getTime() : null;
+  
+  return logs.filter(log => {
+    const meta = log.meta || {};
+    const result = log.result || {};
+    const ts = meta.timestamp ? new Date(meta.timestamp).getTime() : (log.createdAt || 0);
+    
+    if (filters.tag && !wildcardMatch(filters.tag, meta.trainingTag)) return false;
+    if (filters.mode && meta.mode !== filters.mode) return false;
+    if (filters.winner && result.winner !== filters.winner) return false;
+    if (dateFromTs && ts < dateFromTs) return false;
+    if (dateToTs && ts > dateToTs) return false;
+    return true;
+  });
+}
+
+window.countGameLogs = async function() {
+  const preview = document.getElementById('gameLogPreview');
+  const content = document.getElementById('gameLogPreviewContent');
+  preview.style.display = 'block';
+  content.innerHTML = '読み込み中...';
+  
+  try {
+    const snap = await get(ref(db, 'game_logs'));
+    allGameLogs = [];
+    if (snap.exists()) {
+      snap.forEach(child => {
+        allGameLogs.push({ sessionId: child.key, ...child.val() });
+      });
+    }
+    
+    const filters = getGameLogFilters();
+    const filtered = filterGameLogs(allGameLogs, filters);
+    
+    document.getElementById('gameLogCount').textContent = `${filtered.length} 件`;
+    
+    // 統計情報
+    const redWins = filtered.filter(l => l.result?.winner === 'red').length;
+    const blueWins = filtered.filter(l => l.result?.winner === 'blue').length;
+    const soloCount = filtered.filter(l => l.meta?.mode === 'solo').length;
+    const onlineCount = filtered.filter(l => l.meta?.mode === 'online').length;
+    const avgStock = filtered.length ? (filtered.reduce((sum, l) => sum + (l.result?.finalStockPrice || 0), 0) / filtered.length).toFixed(1) : '-';
+    
+    content.innerHTML = `
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;">
+        <div>📊 総数: <strong style="color: var(--primary);">${filtered.length}</strong> 件</div>
+        <div>🔴 Red勝利: <strong style="color: var(--error);">${redWins}</strong> (${filtered.length ? Math.round(redWins/filtered.length*100) : 0}%)</div>
+        <div>🔵 Blue勝利: <strong style="color: var(--primary);">${blueWins}</strong> (${filtered.length ? Math.round(blueWins/filtered.length*100) : 0}%)</div>
+        <div>🎮 ソロ: <strong>${soloCount}</strong></div>
+        <div>👥 オンライン: <strong>${onlineCount}</strong></div>
+        <div>📈 平均最終株価: <strong style="color: var(--accent);">${avgStock}</strong></div>
+      </div>
+    `;
+    
+    // AI分析の件数も同期
+    updateAIDataCounts();
+  } catch (e) {
+    console.error(e);
+    content.innerHTML = '<span style="color: var(--error);">データ取得エラー</span>';
+  }
+};
+
+window.exportGameLogs = async function() {
+  if (allGameLogs.length === 0) {
+    await countGameLogs();
+  }
+  
+  const filters = getGameLogFilters();
+  const filtered = filterGameLogs(allGameLogs, filters);
+  
+  if (filtered.length === 0) {
+    alert('出力するデータがありません');
+    return;
+  }
+  
+  // 出力形式の整形
+  const exportData = {
+    exportedAt: new Date().toISOString(),
+    filters: filters,
+    count: filtered.length,
+    logs: filtered.map(log => ({
+      sessionId: log.sessionId,
+      meta: log.meta,
+      turns: log.turns,
+      result: log.result,
+      createdAt: log.createdAt,
+      completedAt: log.completedAt
+    }))
+  };
+  
+  const json = JSON.stringify(exportData, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  
+  // ファイル名にフィルター条件を含める
+  const datePart = new Date().toISOString().slice(0,10);
+  const tagPart = filters.tag ? `_${filters.tag}` : '';
+  const winnerPart = filters.winner ? `_${filters.winner}wins` : '';
+  link.download = `shells_hack_game_logs${tagPart}${winnerPart}_${datePart}.json`;
+  link.click();
+};
+
+// 初期化時にgame_logタグも読み込む
+loadGameLogTags();
+
+// ===== AI Analysis Functions =====
+const AI_STORAGE_KEY = 'shells_hack_admin_api_key';
+const PRESETS = {
+  overview: '全体的な傾向を分析してください。特に以下の観点で：\n1. 研修効果（変容スコア）の傾向\n2. 最も多い業種・職種\n3. 改善要望の傾向',
+  antipattern: 'Red（攻撃側）が勝利したゲームを分析し、Blue（防御側）の敗因パターンを特定してください。具体的に：\n1. どのコンポーネントが最も侵入されやすいか\n2. どの対策が不足していたか\n3. コスト配分の問題点',
+  effective: 'Blue（防御側）が勝利したゲームを分析し、効果的だった対策パターンを特定してください。',
+  industry: '業種別の傾向を分析してください。各業種で：\n1. 変容スコアの違い\n2. 選択される対策の傾向\n3. 改善要望の違い',
+  retention: 'フォローアップデータから、研修効果の定着率を分析してください。\n1. 初回→フォローアップでの数値変化\n2. 定着している項目/低下している項目\n3. 定着率向上のための提案',
+  action: 'フォローアップで報告されたアクション実行状況を分析してください。\n1. 実行率と実行内容の傾向\n2. 未実行の理由の分類\n3. 実行促進のための提案'
+};
+
+// APIキー管理
+function loadApiKey() {
+  const key = localStorage.getItem(AI_STORAGE_KEY) || '';
+  document.getElementById('aiApiKey').value = key;
+}
+
+window.saveApiKey = function() {
+  const key = document.getElementById('aiApiKey').value.trim();
+  if (key) {
+    localStorage.setItem(AI_STORAGE_KEY, key);
+    alert('APIキーを保存しました');
+  }
+};
+
+window.clearApiKey = function() {
+  localStorage.removeItem(AI_STORAGE_KEY);
+  document.getElementById('aiApiKey').value = '';
+  alert('APIキーを削除しました');
+};
+
+window.setPreset = function(preset) {
+  document.getElementById('aiPrompt').value = PRESETS[preset] || '';
+};
+
+// 分析結果の生Markdownテキストを保持
+let lastAnalysisMarkdown = '';
+
+window.clearAIResponse = function() {
+  document.getElementById('aiResponseContent').textContent = '分析結果がここに表示されます';
+  document.getElementById('aiResponse').className = 'ai-response';
+  document.getElementById('aiTokenInfo').textContent = '';
+  lastAnalysisMarkdown = '';
+};
+
+// Markdown出力
+window.exportAnalysisMd = function() {
+  const content = getAnalysisMarkdown();
+  if (!content) {
+    alert('出力する分析結果がありません');
+    return;
+  }
+  
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+  const filename = `shells_hack_analysis_${timestamp}.md`;
+  
+  const blob = new Blob([content], { type: 'text/markdown; charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
+
+// PDF出力（印刷ダイアログ経由）
+window.exportAnalysisPdf = function() {
+  const contentDiv = document.getElementById('aiResponseContent');
+  const content = contentDiv.innerHTML;
+  
+  if (!content || content === '分析結果がここに表示されます') {
+    alert('出力する分析結果がありません');
+    return;
+  }
+  
+  const timestamp = new Date().toLocaleString('ja-JP');
+  const tokenInfo = document.getElementById('aiTokenInfo').textContent;
+  
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(`
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>SHELLS HACK 分析レポート</title>
+<style>
+  body { font-family: 'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif; line-height: 1.8; padding: 40px; max-width: 800px; margin: 0 auto; color: #333; }
+  h1 { color: #0066cc; border-bottom: 3px solid #0066cc; padding-bottom: 8px; margin-bottom: 24px; font-size: 24px; }
+  h2 { color: #004499; margin-top: 28px; margin-bottom: 12px; font-size: 18px; border-left: 4px solid #0066cc; padding-left: 12px; }
+  h3 { color: #333; margin-top: 20px; margin-bottom: 8px; font-size: 15px; }
+  p { margin-bottom: 12px; }
+  ul, ol { margin: 12px 0; padding-left: 24px; }
+  li { margin-bottom: 6px; }
+  code { background: #f4f4f4; padding: 2px 6px; border-radius: 3px; font-family: 'Consolas', monospace; font-size: 13px; }
+  pre { background: #f4f4f4; padding: 16px; border-radius: 6px; overflow-x: auto; margin: 16px 0; }
+  pre code { background: none; padding: 0; }
+  strong { color: #d35400; }
+  .header { text-align: center; margin-bottom: 32px; padding-bottom: 16px; border-bottom: 1px solid #ddd; }
+  .header h1 { border: none; margin-bottom: 8px; }
+  .meta { font-size: 12px; color: #888; }
+  .footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid #ddd; font-size: 11px; color: #888; text-align: right; }
+  @media print { body { padding: 20px; } }
+</style>
+</head>
+<body onload="setTimeout(function() { window.print(); }, 500);">
+<div class="header">
+  <h1>SHELLS HACK 分析レポート</h1>
+  <div class="meta">生成日時: ${timestamp}</div>
+</div>
+<div class="content">${content}</div>
+<div class="footer">${tokenInfo ? tokenInfo + ' | ' : ''}Generated by SHELLS HACK Admin</div>
+</body>
+</html>`);
+  printWindow.document.close();
+};
+
+// 分析結果のMarkdownテキストを取得
+function getAnalysisMarkdown() {
+  const contentDiv = document.getElementById('aiResponseContent');
+  const html = contentDiv.innerHTML;
+  
+  if (!html || html === '分析結果がここに表示されます') {
+    return null;
+  }
+  
+  const timestamp = new Date().toISOString().slice(0, 19).replace('T', ' ');
+  const tokenInfo = document.getElementById('aiTokenInfo').textContent;
+  
+  // lastAnalysisMarkdownがあればそれを使う（元のMarkdown）
+  if (lastAnalysisMarkdown) {
+    return `# SHELLS HACK 分析レポート\n\n生成日時: ${timestamp}\n\n---\n\n${lastAnalysisMarkdown}\n\n---\n\n${tokenInfo ? '_' + tokenInfo + '_' : ''}\n`;
+  }
+  
+  // HTMLからMarkdownに逆変換（フォールバック）
+  let md = html
+    .replace(/<h1>(.*?)<\/h1>/gi, '# $1\n\n')
+    .replace(/<h2>(.*?)<\/h2>/gi, '## $1\n\n')
+    .replace(/<h3>(.*?)<\/h3>/gi, '### $1\n\n')
+    .replace(/<strong>(.*?)<\/strong>/gi, '**$1**')
+    .replace(/<em>(.*?)<\/em>/gi, '*$1*')
+    .replace(/<code>(.*?)<\/code>/gi, '`$1`')
+    .replace(/<li>(.*?)<\/li>/gi, '- $1\n')
+    .replace(/<ul>|<\/ul>/gi, '\n')
+    .replace(/<ol>|<\/ol>/gi, '\n')
+    .replace(/<pre><code>([\s\S]*?)<\/code><\/pre>/gi, '```\n$1\n```\n')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<p>(.*?)<\/p>/gi, '$1\n\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&')
+    .replace(/\n{3,}/g, '\n\n');
+  
+  return `# SHELLS HACK 分析レポート\n\n生成日時: ${timestamp}\n\n---\n\n${md.trim()}\n\n---\n\n${tokenInfo ? '_' + tokenInfo + '_' : ''}\n`;
+}
+
+// AI分析用データカウント更新
+function updateAIDataCounts() {
+  const { feedbackFiltered, followupFiltered } = getFilteredData();
+  document.getElementById('aiFeedbackCount').textContent = feedbackFiltered.length;
+  document.getElementById('aiFollowupCount').textContent = followupFiltered.length;
+  
+  // ゲームログもフィルター適用後の件数を表示
+  if (allGameLogs.length > 0) {
+    const filters = getGameLogFilters();
+    const filtered = filterGameLogs(allGameLogs, filters);
+    document.getElementById('aiGameLogCount').textContent = filtered.length;
+  } else {
+    document.getElementById('aiGameLogCount').textContent = 0;
+  }
+  updateAIDataInfo();
+}
+
+function updateAIDataInfo() {
+  const fb = document.getElementById('aiIncludeFeedback').checked;
+  const fu = document.getElementById('aiIncludeFollowup').checked;
+  const gl = document.getElementById('aiIncludeGameLogs').checked;
+  
+  let count = 0;
+  if (fb) count += parseInt(document.getElementById('aiFeedbackCount').textContent) || 0;
+  if (fu) count += parseInt(document.getElementById('aiFollowupCount').textContent) || 0;
+  if (gl) count += parseInt(document.getElementById('aiGameLogCount').textContent) || 0;
+  
+  const countEl = document.getElementById('aiDataCount');
+  if (count === 0) {
+    countEl.textContent = 'データ未選択';
+    countEl.style.color = '';
+  } else if (count > 100) {
+    countEl.textContent = `⚠️ ${count} 件（大量）`;
+    countEl.style.color = 'var(--warning)';
+  } else {
+    countEl.textContent = `${count} 件のデータ`;
+    countEl.style.color = '';
+  }
+}
+
+// データ準備（async化：gameLogsの自動読み込み対応）
+async function prepareDataForAI() {
+  const { feedbackFiltered, followupFiltered } = getFilteredData();
+  const includeFb = document.getElementById('aiIncludeFeedback').checked;
+  const includeFu = document.getElementById('aiIncludeFollowup').checked;
+  const includeGl = document.getElementById('aiIncludeGameLogs').checked;
+  
+  const data = {};
+  
+  if (includeFb && feedbackFiltered.length > 0) {
+    data.feedback = feedbackFiltered.map(d => ({
+      trainingTag: d.trainingTag,
+      industry: d.q1_industry,
+      size: d.q3_employee_size,
+      role: d.q4_job_role,
+      team: d.q5_team_played,
+      pre: { killchain: d.q6_pre_killchain, priority: d.q7_pre_priority, confidence: d.q8_pre_confidence },
+      post: { killchain: d.q9_post_killchain, priority: d.q10_post_priority, confidence: d.q11_post_confidence },
+      change: { killchain: d.score_killchain_change, priority: d.score_priority_change, confidence: d.score_confidence_change },
+      action: d.q15_action,
+      impact: d.q16_impact,
+      useful: d.q17_useful,
+      gameRating: d.q18_game_format,
+      feedback: d.q19_feedback
+    }));
+  }
+  
+  if (includeFu && followupFiltered.length > 0) {
+    data.followup = followupFiltered.map(d => ({
+      trainingTag: d.trainingTag,
+      industry: d.q1_industry,
+      size: d.q3_employee_size,
+      role: d.q4_job_role,
+      actionRecall: d.q5_action_recall,
+      executed: d.q6_executed,
+      executedDetail: d.q7_executed_detail,
+      notExecutedReason: d.q8_not_executed_reason,
+      awarenessChange: d.q9_awareness_change,
+      shared: d.q10_shared,
+      sharedContent: d.q11_shared_content,
+      current: { killchain: d.q12_current_killchain, priority: d.q13_current_priority, confidence: d.q14_current_confidence },
+      improved: d.q15_improved,
+      newInsight: d.q16_new_insight,
+      priorityMeasures: d.q17_priority_measures,
+      followupUseful: d.q18_followup_useful,
+      overallUseful: d.q19_overall_useful,
+      comment: d.q20_comment
+    }));
+  }
+  
+  // gameLogsが未読み込みの場合は自動取得
+  if (includeGl) {
+    if (allGameLogs.length === 0) {
+      console.log('gameLogsが未読み込みのため自動取得中...');
+      try {
+        const snap = await get(ref(db, 'game_logs'));
+        if (snap.exists()) {
+          snap.forEach(child => {
+            allGameLogs.push({ sessionId: child.key, ...child.val() });
+          });
+        }
+        updateAIDataCounts(); // フィルター適用後の件数を表示
+      } catch (e) {
+        console.error('gameLogsの自動取得に失敗:', e);
+      }
+    }
+    
+    if (allGameLogs.length > 0) {
+      const filters = getGameLogFilters();
+      const filtered = filterGameLogs(allGameLogs, filters);
+      
+      data.gameLogs = filtered.map(log => ({
+        sessionId: log.sessionId,
+        trainingTag: log.meta?.trainingTag,
+        mode: log.meta?.mode,
+        company: log.meta?.company?.name,
+        actor: log.meta?.actor?.name,
+        turnCount: log.meta?.turnCount,
+        winner: log.result?.winner,
+        finalStock: log.result?.finalStockPrice,
+        endCondition: log.result?.endCondition,
+        intruded: log.result?.summary?.intrudedComponents,
+        compromised: log.result?.summary?.assetsCompromised,
+        turns: log.turns
+      }));
+    }
+  }
+  
+  return data;
+}
+
+// Markdown簡易変換
+function renderMarkdown(text) {
+  return text
+    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+    .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/^- (.+)$/gm, '<li>$1</li>')
+    .replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>')
+    .replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
+}
+
+// AI分析実行
+window.runAIAnalysis = async function() {
+  const apiKey = document.getElementById('aiApiKey').value.trim() || localStorage.getItem(AI_STORAGE_KEY);
+  if (!apiKey) {
+    alert('APIキーを入力してください');
+    return;
+  }
+  
+  const prompt = document.getElementById('aiPrompt').value.trim();
+  if (!prompt) {
+    alert('分析内容を入力してください');
+    return;
+  }
+  
+  const data = await prepareDataForAI();
+  if (Object.keys(data).length === 0) {
+    alert('分析対象データがありません');
+    return;
+  }
+  
+  // データ量警告
+  const dataJson = JSON.stringify(data);
+  const estimatedTokens = Math.ceil(dataJson.length / 4);
+  const totalRecords = (data.feedback?.length || 0) + (data.followup?.length || 0) + (data.gameLogs?.length || 0);
+  
+  if (estimatedTokens > 100000) {
+    if (!confirm(`⚠️ データ量が非常に大きいです（推定${Math.round(estimatedTokens/1000)}Kトークン、${totalRecords}件）。\nAPIコストが高額になる可能性があります。続行しますか？`)) {
+      return;
+    }
+  } else if (estimatedTokens > 50000) {
+    if (!confirm(`⚠️ データ量が多めです（推定${Math.round(estimatedTokens/1000)}Kトークン、${totalRecords}件）。\n続行しますか？`)) {
+      return;
+    }
+  }
+  
+  const responseDiv = document.getElementById('aiResponse');
+  const contentDiv = document.getElementById('aiResponseContent');
+  const tokenInfo = document.getElementById('aiTokenInfo');
+  
+  responseDiv.className = 'ai-response loading';
+  contentDiv.textContent = '分析中...';
+  tokenInfo.textContent = '';
+  
+  const systemPrompt = `あなたはSHELLS HACKというサイバーセキュリティ研修ゲームのデータアナリストです。
+提供されるデータを分析し、洞察を提供してください。
+
+データ構造:
+- feedback: 初回研修後のアンケート回答（変容スコア=研修前後の理解度変化）
+- followup: 1ヶ月後のフォローアップアンケート（アクション実行状況、定着度）
+- gameLogs: ゲームプレイログ（勝敗、使用対策、侵入されたコンポーネント等）
+
+分析の際は:
+1. 具体的な数値や割合を示す
+2. パターンや傾向を明確に指摘する
+3. 実務的な改善提案を含める
+4. 日本語で回答する`;
+
+  const userMessage = `以下のデータを分析してください。
+
+【分析依頼】
+${prompt}
+
+【データ】
+${JSON.stringify(data, null, 2)}`;
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 4096,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: userMessage }]
+      })
+    });
+    
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error?.message || `API Error: ${response.status}`);
+    }
+    
+    const result = await response.json();
+    const text = result.content[0]?.text || '応答がありません';
+    
+    // 元のMarkdownを保存（エクスポート用）
+    lastAnalysisMarkdown = text;
+    
+    responseDiv.className = 'ai-response';
+    contentDiv.innerHTML = renderMarkdown(text);
+    
+    // トークン情報
+    const usage = result.usage;
+    if (usage) {
+      tokenInfo.textContent = `入力: ${usage.input_tokens} tokens / 出力: ${usage.output_tokens} tokens`;
+    }
+    
+  } catch (e) {
+    console.error('AI Analysis Error:', e);
+    responseDiv.className = 'ai-response error';
+    contentDiv.textContent = `エラー: ${e.message}`;
+  }
+};
+
+// チェックボックス変更時にカウント更新
+document.getElementById('aiIncludeFeedback').addEventListener('change', updateAIDataInfo);
+document.getElementById('aiIncludeFollowup').addEventListener('change', updateAIDataInfo);
+document.getElementById('aiIncludeGameLogs').addEventListener('change', updateAIDataInfo);
+
+// 初期化
+loadApiKey();
+
+// applyAll後にAIカウントも更新
+const originalApplyAll = applyAll;
+applyAll = function() {
+  originalApplyAll();
+  updateAIDataCounts();
+};
+
+window.loadData = loadData;
+loadData();
+</script>
+</body>
+</html>

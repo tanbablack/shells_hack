@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SHELLS HACK ログ分析ガイド</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Fira+Code&display=swap" rel="stylesheet">
+<style>
+:root {
+  --primary: #00d4ff; --accent: #ffd700; --success: #00ff88; --error: #ff4444;
+  --bg: #0a0e14; --bg-card: rgba(15, 25, 40, 0.95); --bg-code: #1a2a3a;
+  --text: #e8f4f8; --text-dim: #6b8a9e; --border: #2a3a4a;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Noto Sans JP', sans-serif; background: linear-gradient(135deg, #0d1b2a, #1b263b); color: var(--text); min-height: 100vh; padding: 20px; }
+.container { max-width: 1200px; margin: 0 auto; }
+.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding-bottom: 16px; border-bottom: 2px solid var(--accent); }
+h1 { font-size: 24px; color: var(--accent); }
+.back-btn { padding: 8px 16px; background: var(--primary); color: var(--bg); border: none; border-radius: 6px; cursor: pointer; font-weight: 600; text-decoration: none; }
+.section { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 24px; }
+.section-title { font-size: 18px; font-weight: 700; color: var(--primary); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+.section-title::before { content: '▸'; color: var(--accent); }
+h3 { font-size: 14px; color: var(--accent); margin: 16px 0 8px; }
+p, li { font-size: 13px; line-height: 1.8; color: var(--text); }
+ul { padding-left: 20px; margin: 8px 0; }
+li { margin: 4px 0; }
+code { font-family: 'Fira Code', monospace; background: var(--bg-code); padding: 2px 6px; border-radius: 4px; font-size: 12px; color: var(--primary); }
+pre { background: var(--bg-code); padding: 16px; border-radius: 8px; overflow-x: auto; margin: 12px 0; font-family: 'Fira Code', monospace; font-size: 11px; line-height: 1.6; }
+pre code { background: none; padding: 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 12px; }
+th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+th { background: rgba(0,212,255,0.1); color: var(--primary); font-weight: 600; }
+tr:hover { background: rgba(255,255,255,0.02); }
+.tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; margin-right: 4px; }
+.tag-blue { background: rgba(0,212,255,0.2); color: var(--primary); }
+.tag-red { background: rgba(255,68,68,0.2); color: var(--error); }
+.tag-meta { background: rgba(255,215,0,0.2); color: var(--accent); }
+.analysis-tip { background: rgba(0,255,136,0.1); border-left: 3px solid var(--success); padding: 12px 16px; margin: 12px 0; border-radius: 0 8px 8px 0; }
+.analysis-tip strong { color: var(--success); }
+.nav-tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+.nav-tab { padding: 8px 16px; background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; font-size: 12px; transition: all 0.2s; }
+.nav-tab:hover { border-color: var(--primary); }
+.nav-tab.active { background: rgba(0,212,255,0.1); border-color: var(--primary); color: var(--primary); }
+.toc { background: rgba(0,0,0,0.2); padding: 16px; border-radius: 8px; margin-bottom: 20px; }
+.toc a { color: var(--primary); text-decoration: none; display: block; padding: 4px 0; font-size: 12px; }
+.toc a:hover { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>📚 SHELLS HACK ログ分析ガイド</h1>
+    <button onclick="window.close()" class="back-btn">✕ タブを閉じる</button>
+  </div>
+
+  <div class="toc">
+    <strong style="color: var(--accent);">目次</strong>
+    <a href="#overview">概要・データ構造</a>
+    <a href="#meta">meta - ゲーム設定</a>
+    <a href="#turns">turns - ターン別イベント</a>
+    <a href="#result">result - ゲーム結果</a>
+    <a href="#analysis">AI分析ガイド</a>
+    <a href="#queries">LLM分析プロンプト例</a>
+  </div>
+
+  <div class="section" id="overview">
+    <div class="section-title">概要・データ構造</div>
+    <p>ゲームプレイの全ターンをイベントログ形式で記録。Firebase Realtime Databaseに保存。</p>
+    
+    <h3>Firebase パス構造</h3>
+    <pre><code>game_logs/{sessionId}/
+├── meta                    // ゲーム開始時の設定・選択
+├── turns/                  // ターン別イベントログ
+│   ├── 1_blue              // ターン1 Blue側
+│   ├── 1_red               // ターン1 Red側
+│   ├── 2_blue
+│   └── ...
+├── result                  // ゲーム終了時の結果
+├── createdAt               // ログ作成日時
+└── completedAt             // ゲーム完了日時</code></pre>
+
+    <h3>セッションID形式</h3>
+    <p><code>S</code> + 8桁英数字（例: <code>S1a2b3c4d</code>）。ソロ・オンライン共通。</p>
+  </div>
+
+  <div class="section" id="meta">
+    <div class="section-title">meta - ゲーム設定</div>
+    <p>ゲーム開始時に記録。プレイヤーが選択した企業・攻撃者・アーキテクチャ情報。</p>
+    
+    <table>
+      <tr><th>フィールド</th><th>型</th><th>説明</th><th>AI分析での用途</th></tr>
+      <tr><td><code>sessionId</code></td><td>string</td><td>セッション識別子</td><td>ログ紐付け</td></tr>
+      <tr><td><code>timestamp</code></td><td>ISO8601</td><td>ゲーム開始日時</td><td>時系列分析</td></tr>
+      <tr><td><code>hostname</code></td><td>string</td><td>接続元ホスト名</td><td>不正アクセス検出・監査</td></tr>
+      <tr><td><code>trainingTag</code></td><td>string</td><td>研修タグ（例: "CORP_2025Q1"）</td><td>研修セッション別分析・feedback/followupとの紐付け</td></tr>
+      <tr><td><code>mode</code></td><td>"solo" | "online"</td><td>プレイモード</td><td>ソロ/対戦別傾向分析</td></tr>
+      <tr><td><code>turnCount</code></td><td>number</td><td>設定ターン数（5-30）</td><td>ゲーム長さ別分析</td></tr>
+      <tr><td><code>company.name</code></td><td>string</td><td>選択企業名</td><td>難易度別分析</td></tr>
+      <tr><td><code>company.fund</code></td><td>number</td><td>企業の資金力（1-3）</td><td>リソース制約分析</td></tr>
+      <tr><td><code>company.robust</code></td><td>number</td><td>企業の堅牢性（1-3）</td><td>初期防御力分析</td></tr>
+      <tr><td><code>actor.name</code></td><td>string</td><td>選択攻撃者名</td><td>攻撃者タイプ別分析</td></tr>
+      <tr><td><code>actor.fund</code></td><td>number</td><td>攻撃者の資金力（1-3）</td><td>攻撃リソース分析</td></tr>
+      <tr><td><code>actor.tech</code></td><td>number</td><td>攻撃者の技術力（1-3）</td><td>攻撃成功率との相関</td></tr>
+      <tr><td><code>actor.purpose</code></td><td>string</td><td>攻撃目的</td><td>目的達成パターン分析</td></tr>
+      <tr><td><code>components</code></td><td>string[]</td><td>配置コンポーネント一覧</td><td>アーキテクチャ傾向分析</td></tr>
+      <tr><td><code>adjacency</code></td><td>object</td><td>コンポーネント間の隣接関係</td><td>攻撃経路分析</td></tr>
+    </table>
+
+    <div class="analysis-tip">
+      <strong>💡 分析ヒント:</strong> <code>trainingTag</code>を研修単位または個人単位で付与することで、全体分析だけでなく研修セッション別・個人別のゲーム行動分析が可能。フィードバックフォーム（training_feedback）との紐付けにも使用。
+    </div>
+
+    <h3>サンプルデータ</h3>
+    <pre><code>{
+  "sessionId": "S1234abcd",
+  "timestamp": "2025-12-28T12:00:00Z",
+  "hostname": "shells-hack.com",
+  "trainingTag": "CORP_2025Q1",
+  "mode": "solo",
+  "turnCount": 10,
+  "company": {
+    "name": "中規模IT企業",
+    "fund": 2,
+    "robust": 2
+  },
+  "actor": {
+    "name": "金銭目的の犯罪組織",
+    "fund": 2,
+    "tech": 2,
+    "purpose": "ランサムウェア"
+  },
+  "components": ["VPN", "IdP", "業務端末", "ファイルサーバ", "DB"],
+  "adjacency": {
+    "VPN": ["IdP", "業務端末"],
+    "IdP": ["業務端末", "ファイルサーバ"],
+    ...
+  }
+}</code></pre>
+  </div>
+
+  <div class="section" id="turns">
+    <div class="section-title">turns - ターン別イベントログ</div>
+    <p>各ターンのBlue/Red両側の行動を個別に記録。キー形式: <code>{turn}_{team}</code></p>
+
+    <div class="nav-tabs">
+      <span class="nav-tab active" onclick="showTeam('blue')"><span class="tag tag-blue">Blue</span>防御側</span>
+      <span class="nav-tab" onclick="showTeam('red')"><span class="tag tag-red">Red</span>攻撃側</span>
+    </div>
+
+    <div id="team-blue">
+      <h3>Blue Team（防御側）フィールド</h3>
+      <table>
+        <tr><th>フィールド</th><th>型</th><th>説明</th><th>AI分析での用途</th></tr>
+        <tr><td><code>turn</code></td><td>number</td><td>ターン番号（1-N）</td><td>時系列分析</td></tr>
+        <tr><td><code>team</code></td><td>"blue"</td><td>チーム識別</td><td>フィルタリング</td></tr>
+        <tr><td><code>fundsAtStart</code></td><td>number</td><td>ターン開始時コスト</td><td>リソース管理分析</td></tr>
+        <tr><td><code>fundsGained</code></td><td>number</td><td>獲得コスト</td><td>収入パターン</td></tr>
+        <tr><td><code>fundsSpent</code></td><td>number</td><td>消費コスト</td><td>投資判断分析</td></tr>
+        <tr><td><code>eventCardDrawn</code></td><td>string | null</td><td>引いたイベントカード名</td><td>イベント影響分析</td></tr>
+        <tr><td><code>cardDrawn</code></td><td>string | null</td><td>引いた対策カード名</td><td>カード選択傾向</td></tr>
+        <tr><td><code>action.type</code></td><td>"countermeasure"</td><td>アクション種別</td><td>-</td></tr>
+        <tr><td><code>action.card</code></td><td>string</td><td>使用カード名</td><td>対策選択パターン</td></tr>
+        <tr><td><code>action.target</code></td><td>string</td><td>適用先コンポーネント</td><td>防御優先度分析</td></tr>
+        <tr><td><code>action.cost</code></td><td>number</td><td>コスト</td><td>コスパ分析</td></tr>
+        <tr><td><code>stockPriceBefore</code></td><td>number</td><td>アクション前株価</td><td>被害追跡</td></tr>
+        <tr><td><code>stockPriceAfter</code></td><td>number</td><td>アクション後株価</td><td>被害追跡</td></tr>
+        <tr><td><code>defenseState.{comp}</code></td><td>object</td><td>コンポーネント別防御状態 {detection, defense, recovery}</td><td>防御層の厚み分析</td></tr>
+        <tr><td><code>timestamp</code></td><td>ISO8601</td><td>ターン実行日時</td><td>プレイ速度分析</td></tr>
+      </table>
+
+      <div class="analysis-tip">
+        <strong>💡 分析ヒント:</strong> <code>action = null</code> の場合はパス（行動なし）。コスト不足か戦略的判断かを<code>fundsAtStart</code>で判別可能。
+      </div>
+
+      <h3>サンプルデータ（Blue）</h3>
+      <pre><code>{
+  "turn": 3,
+  "team": "blue",
+  "fundsAtStart": 5,
+  "fundsGained": 2,
+  "fundsSpent": 3,
+  "eventCardDrawn": null,
+  "cardDrawn": "脆弱性パッチ適用",
+  "action": {
+    "type": "countermeasure",
+    "card": "脆弱性パッチ適用",
+    "target": "業務端末",
+    "cost": 3
+  },
+  "stockPriceBefore": 85,
+  "stockPriceAfter": 85,
+  "defenseState": {
+    "業務端末": { "detection": 2, "defense": 1, "recovery": 0 },
+    "VPN": { "detection": 1, "defense": 1, "recovery": 0 }
+  },
+  "timestamp": "2025-12-28T12:05:30Z"
+}</code></pre>
+    </div>
+
+    <div id="team-red" style="display:none;">
+      <h3>Red Team（攻撃側）フィールド</h3>
+      <table>
+        <tr><th>フィールド</th><th>型</th><th>説明</th><th>AI分析での用途</th></tr>
+        <tr><td><code>turn</code></td><td>number</td><td>ターン番号</td><td>時系列分析</td></tr>
+        <tr><td><code>team</code></td><td>"red"</td><td>チーム識別</td><td>フィルタリング</td></tr>
+        <tr><td><code>fundsAtStart</code></td><td>number</td><td>ターン開始時コスト</td><td>リソース管理</td></tr>
+        <tr><td><code>fundsGained</code></td><td>number</td><td>獲得コスト</td><td>収入パターン</td></tr>
+        <tr><td><code>fundsSpent</code></td><td>number</td><td>消費コスト</td><td>投資判断</td></tr>
+        <tr><td><code>eventCardDrawn</code></td><td>string | null</td><td>引いたイベントカード名</td><td>イベント影響</td></tr>
+        <tr><td><code>cardDrawn</code></td><td>string | null</td><td>引いた攻撃カード名</td><td>カード選択傾向</td></tr>
+        <tr><td><code>action.type</code></td><td>"attack"</td><td>アクション種別</td><td>-</td></tr>
+        <tr><td><code>action.card</code></td><td>string</td><td>使用攻撃カード名</td><td>攻撃手法分析</td></tr>
+        <tr><td><code>action.target</code></td><td>string</td><td>攻撃対象コンポーネント</td><td>狙われやすい箇所</td></tr>
+        <tr><td><code>action.category</code></td><td>string</td><td>攻撃カテゴリ（偵察/武器化/侵入/目的実行）</td><td>キルチェーン分析</td></tr>
+        <tr><td><code>action.cost</code></td><td>number</td><td>コスト</td><td>コスパ分析</td></tr>
+        <tr><td><code>action.success</code></td><td>boolean</td><td>攻撃成功/失敗</td><td>成功率・防御効果測定</td></tr>
+        <tr><td><code>stockPriceBefore</code></td><td>number</td><td>攻撃前株価</td><td>被害追跡</td></tr>
+        <tr><td><code>stockPriceAfter</code></td><td>number</td><td>攻撃後株価</td><td>被害追跡</td></tr>
+        <tr><td><code>attackState.reconned</code></td><td>string[]</td><td>偵察済みコンポーネント</td><td>攻撃進捗</td></tr>
+        <tr><td><code>attackState.intruded</code></td><td>string[]</td><td>侵入済みコンポーネント</td><td>侵入深度分析</td></tr>
+        <tr><td><code>attackState.buffs</code></td><td>object</td><td>カテゴリ別バフ値</td><td>強化効果分析</td></tr>
+        <tr><td><code>attackState.bypassAdjacency</code></td><td>boolean</td><td>隣接制限無効化状態</td><td>特殊状態追跡</td></tr>
+        <tr><td><code>timestamp</code></td><td>ISO8601</td><td>ターン実行日時</td><td>プレイ速度分析</td></tr>
+      </table>
+
+      <div class="analysis-tip">
+        <strong>💡 分析ヒント:</strong> <code>action.category</code>の時系列でキルチェーン（偵察→武器化→侵入→目的実行）の遷移パターンを分析可能。
+      </div>
+
+      <h3>サンプルデータ（Red）</h3>
+      <pre><code>{
+  "turn": 3,
+  "team": "red",
+  "fundsAtStart": 4,
+  "fundsGained": 2,
+  "fundsSpent": 2,
+  "eventCardDrawn": "内部告発",
+  "cardDrawn": "フィッシングメール",
+  "action": {
+    "type": "attack",
+    "card": "フィッシングメール",
+    "target": "業務端末",
+    "category": "侵入",
+    "cost": 2,
+    "success": true
+  },
+  "stockPriceBefore": 85,
+  "stockPriceAfter": 80,
+  "attackState": {
+    "reconned": ["VPN", "業務端末", "IdP"],
+    "intruded": ["VPN", "業務端末"],
+    "buffs": { "偵察": 0, "武器化": 1, "侵入": 0, "目的実行": 0 },
+    "bypassAdjacency": false
+  },
+  "timestamp": "2025-12-28T12:06:15Z"
+}</code></pre>
+    </div>
+
+    <h3>攻撃カテゴリ（キルチェーン）</h3>
+    <table>
+      <tr><th>カテゴリ</th><th>説明</th><th>分析観点</th></tr>
+      <tr><td><code>偵察</code></td><td>情報収集フェーズ。対象を偵察済みにする</td><td>初動パターン、偵察範囲</td></tr>
+      <tr><td><code>武器化</code></td><td>攻撃準備フェーズ。次ターン以降にバフ適用</td><td>準備投資傾向</td></tr>
+      <tr><td><code>侵入</code></td><td>実際の侵入。偵察済みの隣接コンポーネントに侵入</td><td>侵入経路、成功/失敗率</td></tr>
+      <tr><td><code>目的実行</code></td><td>情報資産窃取・破壊。株価に直接影響</td><td>被害規模、達成パターン</td></tr>
+    </table>
+  </div>
+
+  <div class="section" id="result">
+    <div class="section-title">result - ゲーム結果</div>
+    <p>ゲーム終了時に記録。勝敗・終了条件・最終状態。</p>
+
+    <table>
+      <tr><th>フィールド</th><th>型</th><th>説明</th><th>AI分析での用途</th></tr>
+      <tr><td><code>winner</code></td><td>"red" | "blue"</td><td>勝者</td><td>勝率分析</td></tr>
+      <tr><td><code>finalStockPrice</code></td><td>number</td><td>最終株価（0-100）</td><td>被害程度分析</td></tr>
+      <tr><td><code>totalTurns</code></td><td>number</td><td>実際の終了ターン</td><td>早期終了パターン</td></tr>
+      <tr><td><code>endCondition</code></td><td>string</td><td>終了条件</td><td>終了パターン分類</td></tr>
+      <tr><td><code>summary.assetsCompromised</code></td><td>string[]</td><td>漏洩した情報資産</td><td>狙われやすい資産</td></tr>
+      <tr><td><code>summary.intrudedComponents</code></td><td>string[]</td><td>侵入されたコンポーネント</td><td>弱点分析</td></tr>
+      <tr><td><code>timestamp</code></td><td>ISO8601</td><td>ゲーム終了日時</td><td>プレイ時間算出</td></tr>
+    </table>
+
+    <h3>終了条件（endCondition）</h3>
+    <table>
+      <tr><th>値</th><th>説明</th><th>勝者</th></tr>
+      <tr><td><code>株価50%以下</code></td><td>株価が50以下に下落</td><td>Red</td></tr>
+      <tr><td><code>目的達成</code></td><td>攻撃者の目的（ランサムウェア等）が達成</td><td>Red</td></tr>
+      <tr><td><code>turns_exhausted</code></td><td>設定ターン数を消化</td><td>Blue（株価50超で生存）</td></tr>
+    </table>
+
+    <h3>情報資産タイプ</h3>
+    <table>
+      <tr><th>資産名</th><th>説明</th><th>株価への影響</th></tr>
+      <tr><td>金融情報</td><td>決算情報、取引データ等</td><td>大</td></tr>
+      <tr><td>顧客個人情報</td><td>氏名、住所、連絡先等</td><td>大</td></tr>
+      <tr><td>社内認証情報</td><td>ID/パスワード、アクセス権限</td><td>中（横展開に利用）</td></tr>
+      <tr><td>企業秘密</td><td>技術情報、戦略情報</td><td>大</td></tr>
+    </table>
+
+    <h3>サンプルデータ</h3>
+    <pre><code>{
+  "winner": "red",
+  "finalStockPrice": 45,
+  "totalTurns": 7,
+  "endCondition": "株価50%以下",
+  "summary": {
+    "assetsCompromised": ["顧客個人情報", "社内認証情報"],
+    "intrudedComponents": ["VPN", "業務端末", "IdP", "ファイルサーバ"]
+  },
+  "timestamp": "2025-12-28T12:15:45Z"
+}</code></pre>
+  </div>
+
+  <div class="section" id="analysis">
+    <div class="section-title">AI分析ガイド</div>
+    
+    <h3>LLM向けログ仕様（コピペ用）</h3>
+    <p>AI分析Copilotでログ投入前にこのコンテキストを貼り付けることで、LLMがログ構造を正確に理解できる。</p>
+    <pre><code>## SHELLS HACK ゲームログ仕様
+
+### ゲーム概要
+サイバーセキュリティ攻防シミュレーション。Blue(防御)とRed(攻撃)が交互にターンを進行。
+勝利条件: Red=株価50以下or攻撃目的達成、Blue=規定ターン終了時に株価50超で生存
+
+### ログ構造
+game_logs/{sessionId}/
+├── meta: ゲーム設定(企業/攻撃者/コンポーネント/隣接関係)
+├── turns/{N}_{blue|red}: ターン別行動ログ
+├── result: 勝敗・終了条件・最終状態
+├── createdAt, completedAt: タイムスタンプ
+
+### meta主要フィールド
+- mode: "solo"|"online"
+- turnCount: 設定ターン数(5-30)
+- company: {name, fund(1-3), robust(1-3)}
+- actor: {name, fund(1-3), tech(1-3), purpose}
+- components: 配置コンポーネント名配列
+- adjacency: {コンポーネント名: [隣接コンポーネント名]}
+- trainingTag: 研修識別タグ(nullable)
+
+### turns[blue]主要フィールド
+- fundsAtStart/fundsGained/fundsSpent: コスト管理
+- eventCardDrawn/cardDrawn: ドローしたカード(nullable)
+- action: {type:"countermeasure", card, target, cost} または null(パス)
+- stockPriceBefore/stockPriceAfter: 株価変動
+- defenseState: {コンポーネント名: {detection(0-4), defense(0-4), recovery(0-4)}}
+
+### turns[red]主要フィールド
+- action: {type:"attack", card, target, category, cost, success:boolean}
+- category: "偵察"|"武器化"|"侵入"|"目的実行" (キルチェーン)
+- attackState: {reconned:[], intruded:[], buffs:{カテゴリ:値}, bypassAdjacency:boolean}
+
+### result主要フィールド
+- winner: "red"|"blue"
+- finalStockPrice: 0-100
+- endCondition: "株価50%以下"|"目的達成"|"turns_exhausted"
+- summary: {assetsCompromised:[], intrudedComponents:[]}
+
+### キルチェーン進行
+偵察(対象を偵察済みに)→武器化(バフ付与)→侵入(偵察済み隣接に侵入)→目的実行(資産窃取/株価下落)
+
+### 防御レベル(detection/defense/recovery)
+0=無防備、1=基本、2=標準、3=強化、4=最大。攻撃成功率に影響。
+
+### 分析観点
+- 敗因: Red勝利時、侵入成功ターンのdefenseState/attackStateから弱点特定
+- 効果的対策: Blue勝利時のaction.cardの傾向
+- 攻撃経路: intrudedの順序とadjacencyの関係
+- リソース管理: fundsAtStart/fundsSpent/fundsGainedの推移
+
+---
+## カードマスター情報
+
+### 攻撃カード一覧
+偵察カテゴリ(4種):
+- OSINT(cost:0,lv:偵察1) - 対象:全て(直接攻撃可能)
+- アクティブスキャン(cost:2,lv:偵察2) - 対象:全て(直接攻撃可能)
+- ソーシャルエンジニアリング(cost:4,lv:偵察3) - 対象:業務端末
+- パッシブ偵察(侵入後)(cost:3,lv:偵察2) - 対象:全て(隣接必須), 条件:隣接侵入済み
+
+武器化カテゴリ(5種):
+- フィッシングサイト構築(cost:2) - 効果:侵入+1, 条件:攻撃対象が業務端末
+- エクスプロイトキット入手(cost:2) - 効果:侵入+1
+- RaaS契約(cost:2) - 効果:実行+1, 条件:ランサムウェア展開使用時
+- ゼロデイ開発(cost:2) - 効果:侵入+2, 条件:技術力★★★以上
+- マルウェア開発(cost:2) - 効果:実行+2, 条件:技術力★★以上
+
+侵入カテゴリ(10種):
+- 標的型フィッシング(cost:3,lv:侵入2) - 対象:業務端末
+- 水飲み場攻撃(cost:2,lv:侵入1) - 対象:業務端末
+- VPN脆弱性悪用(cost:3,lv:侵入2) - 対象:VPN Gateway
+- Webアプリ脆弱性攻撃(cost:3,lv:侵入2) - 対象:Web AP
+- インジェクション攻撃(cost:2,lv:侵入1) - 対象:Web AP
+- IdP侵害(cost:3,lv:侵入2) - 対象:IdP
+- サプライチェーン攻撃(cost:3,lv:侵入2) - 対象:業務端末,Web AP
+- 内部者買収(cost:5,lv:侵入3) - 対象:業務端末
+- ラテラルムーブメント(脆弱性悪用)(cost:1,lv:侵入2) - 横展開,対象:Storage,DB,Backup,運用端末or踏み台サーバ,条件:隣接侵入済み
+- ラテラルムーブメント(認証情報悪用)(cost:1,lv:侵入2) - 横展開,対象:全て,条件:隣接侵入済み
+
+目的実行カテゴリ(5種):
+- データ窃取・外部送信(cost:2,lv:実行2) - 漏洩,対象:全て,条件:侵入済み
+- ランサムウェア展開(cost:2,lv:実行2) - 漏洩,対象:業務端末,運用端末or踏み台サーバ,Backup,Storage,条件:侵入済み
+- ワイパー攻撃(cost:4,lv:実行2) - 削除,対象:全て,条件:侵入済み
+- DDoS攻撃(cost:4,lv:実行1) - 停止,対象:Web AP,DNS,条件:なし
+- インフラ破壊(cost:3,lv:実行2) - 停止,対象:Web AP,運用端末or踏み台サーバ,Storage,DB,Backup,条件:侵入済み
+
+### 対策カード一覧(13種)
+- EDR導入(cost:3) - 効果:侵入+1, 対象:業務端末,運用端末or踏み台サーバ
+- NDR導入(cost:3) - 効果:実行+1, 対象:業務端末,運用端末or踏み台サーバ
+- MFA導入(cost:2) - 効果:侵入+2, 対象:VPN Gateway,IdP,クラウド管理コンソール,運用端末or踏み台サーバ,社内SaaS
+- イミュータブル・バックアップ(cost:2) - 効果:実行+2, 対象:Backup
+- サイバーハイジーン(cost:3) - 効果:侵入+1, 対象:全て
+- ランタイム検知/脅威検知(cost:2) - 効果:侵入+1,実行+1, 対象:Web AP,クラウド管理コンソール,運用端末or踏み台サーバ,Storage,DB,Backup
+- アタックサーフェス監視(cost:2) - 効果:偵察+1, 対象:全て(直接攻撃可能)
+- セキュリティ教育(cost:2) - 効果:偵察+1,侵入+1, 対象:業務端末,運用端末or踏み台サーバ
+- IAM強化(cost:2) - 効果:侵入+1,実行+1, 対象:クラウド管理コンソール
+- 暗号化強化(cost:2) - 効果:実行+1, 対象:DB,Storage,Backup
+- ペンテスト/インシデント演習(cost:3) - 効果:侵入+1,実行+1, 対象:全て(隣接必須)
+- WAF強化(cost:2) - 効果:侵入+1, 対象:Web AP
+- CDN導入(cost:2) - 効果:実行+1, 対象:Web AP,DNS
+
+### 情報資産と株価影響
+- 金融資産情報: 漏洩=-15, 削除=-20, 停止=-5
+- 顧客個人情報: 漏洩=-10, 削除=-20, 停止=-5
+- 社内認証情報: 漏洩=横展開条件解除(3T), 削除=コスト-5, 停止=コスト-1
+- 企業秘密: 漏洩=-5, 削除=-5, 停止=-5
+
+### コンポーネント初期防御レベル(13種)
+- 業務端末: 偵察3,侵入1,実行1 (直接攻撃可能)
+- VPN Gateway: 偵察1,侵入1,実行1 (直接攻撃可能)
+- IdP: 偵察1,侵入3,実行2 (直接攻撃可能)
+- Web AP: 偵察1,侵入2,実行1 (直接攻撃可能)
+- 外部SaaS: 偵察1,侵入3,実行2 (直接攻撃可能)
+- DNS: 偵察1,侵入3,実行2 (直接攻撃可能)
+- 3rd Party JS: 偵察1,侵入3,実行1 (直接攻撃可能)
+- 運用端末or踏み台サーバ: 偵察2,侵入2,実行1 (内部)
+- クラウド管理コンソール: 偵察1,侵入3,実行3 (内部)
+- 社内SaaS: 偵察2,侵入3,実行2 (内部)
+- DB: 偵察2,侵入2,実行1 (内部)
+- Backup: 偵察2,侵入2,実行1 (内部)
+- Storage: 偵察2,侵入2,実行1 (内部)
+
+### 攻撃者タイプと勝利条件
+- 国家支援金銭調達: 株価30%下落 or 金融資産窃取
+- 国家支援産業スパイ: 企業秘密窃取
+- 産業スパイ集団: 社内認証情報 or 企業秘密窃取
+- ハクティビスト: サービス停止 or 株価20%下落
+
+### データ連携（feedback併用時）
+game_logsとtraining_feedbackはtrainingTagで紐付け可能。
+- game_logs/{sessionId}/meta.trainingTag
+- training_feedback/responses/{id}.trainingTag
+- training_feedback/followup_responses/{id}.trainingTag
+feedbackにはq1_industry(業種)、意識変化スコア等を含む。</code></pre>
+
+    <h3>主要分析テーマ</h3>
+    <table>
+      <tr><th>#</th><th>テーマ</th><th>使用データ</th><th>期待される知見</th></tr>
+      <tr><td>1</td><td>敗因分析（アンチパターン検出）</td><td>result.winner="red" + turns + defenseState</td><td>侵入成功時のBlue側防御状態から弱点パターンを抽出</td></tr>
+      <tr><td>2</td><td>効果的対策分析</td><td>result.winner="blue" + turns[blue].action</td><td>Blue勝利時に使用された対策カードの傾向・優先度</td></tr>
+      <tr><td>3</td><td>攻撃経路分析</td><td>turns[red].action + meta.adjacency + attackState.intruded</td><td>頻出する侵入経路・狙われやすいコンポーネント</td></tr>
+      <tr><td>4</td><td>研修フィードバック生成</td><td>単一ログ全体</td><td>個人向けの良かった点・改善点・次回アクション</td></tr>
+      <tr><td>5</td><td>複数ログの傾向分析</td><td>複数ログの統計</td><td>研修全体の敗因パターン・対策効果ランキング</td></tr>
+      <tr><td>6</td><td>業種別傾向分析</td><td>trainingTag→feedback.q1_industry + result</td><td>業種による勝率・弱点・意識変化の違い</td></tr>
+      <tr><td>7</td><td>学習効果測定（成長追跡）</td><td>同一タグの時系列ログ + feedback</td><td>研修効果の定量化・個人の成長パターン</td></tr>
+    </table>
+
+    <div class="analysis-tip">
+      <strong>💡 三角分析:</strong> game_logs（ゲーム行動）とtraining_feedback（業種・意識変化）を組み合わせることで「業種×ゲーム行動×意識変化」の三角分析が可能。例：金融業界はDB防御を優先する傾向があるが、実際には初期侵入経路（VPN/業務端末）で負けるパターンが多い、等。
+    </div>
+  </div>
+
+  <div class="section" id="queries">
+    <div class="section-title">LLM分析プロンプト例</div>
+    <p>Admin画面のAI分析Copilotで使用するプロンプト例。上記「主要分析テーマ」と番号が対応。</p>
+    
+    <h3>使用手順</h3>
+    <ol style="font-size:13px; margin-bottom:16px;">
+      <li>上記「LLM向けログ仕様」をコピーしてAIに投入</li>
+      <li>ログデータを投入（業種別・成長追跡の場合はfeedbackも）</li>
+      <li>以下のプロンプト例を投入</li>
+    </ol>
+
+    <h3>1. 敗因分析（アンチパターン検出）</h3>
+    <pre><code>このゲームログを分析し、Blue側の敗因を特定してください。
+- どのターンで致命的なミスがあったか
+- 侵入成功時のdefenseStateから防御の穴を特定
+- どの対策を優先すべきだったか
+- 攻撃者の侵入経路と、それを防ぐ方法</code></pre>
+
+    <h3>2. 効果的対策分析</h3>
+    <pre><code>Blue勝利のゲームログを分析し、効果的だった対策を特定してください。
+- 使用された対策カードとその適用先
+- 攻撃を防いだ決定的な対策
+- コスト対効果の高かった対策
+- 対策の優先順位の妥当性評価</code></pre>
+
+    <h3>3. 攻撃経路分析</h3>
+    <pre><code>このゲームログから攻撃経路を分析してください。
+- 最初に狙われたコンポーネント
+- adjacency（隣接関係）に沿った侵入の流れ
+- 横展開のパターン
+- 狙われやすいコンポーネントの特徴</code></pre>
+
+    <h3>4. 研修フィードバック生成</h3>
+    <pre><code>このプレイヤーのゲームログから、研修フィードバックを作成してください。
+- 良かった点（効果的だった対策・判断）
+- 改善点（見落としていたリスク・優先度ミス）
+- 次回意識すべき具体的なアクション</code></pre>
+
+    <h3>5. 複数ログの傾向分析</h3>
+    <pre><code>これらのゲームログ（N件）を分析し、傾向をまとめてください。
+- 頻出する敗因パターン
+- 最も狙われやすいコンポーネント
+- 効果的だった対策カードのランキング
+- 研修全体への改善提案</code></pre>
+
+    <h3>6. 業種別傾向分析（feedback連携）</h3>
+    <pre><code>ゲームログとフィードバックデータを照合し、業種別の傾向を分析してください。
+（trainingTagで紐付け、feedbackのq1_industryで業種を取得）
+- 業種ごとの勝率
+- 業種別の典型的な弱点（狙われやすい経路）
+- 業種特有の対策優先傾向
+- 業種別の意識変化パターン</code></pre>
+
+    <h3>7. 学習効果測定（成長追跡）</h3>
+    <pre><code>同一タグの複数ゲームログを時系列で分析してください。
+- 回を重ねるごとの勝率変化
+- 改善された点（対策選択・優先度判断）
+- 繰り返し発生している課題
+- feedbackの意識変化スコアとの相関
+- 次のステップとして推奨する学習項目</code></pre>
+  </div>
+</div>
+
+<script>
+function showTeam(team) {
+  document.getElementById('team-blue').style.display = team === 'blue' ? 'block' : 'none';
+  document.getElementById('team-red').style.display = team === 'red' ? 'block' : 'none';
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+}
+</script>
+</body>
+</html>

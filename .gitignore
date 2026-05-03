@@ -6,9 +6,3 @@
 
 # Local Claude config
 .claude/
-
-# Training materials
-training/
-
-# Admin pages
-admin/
